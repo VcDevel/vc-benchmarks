@@ -19,7 +19,7 @@ typedef std::vector<VectorizedCoordinate, Vc::Allocator<VectorizedCoordinate>>  
 typedef std::vector<VectorizedPolarCoordinate, Vc::Allocator<VectorizedPolarCoordinate>> vectorVectorizedPolarCoordinate;
 
 //!Creates random numbers for AovS
-void simulateInput(vectorVectorizedCoordinate &input, const size_t size)
+void simulateInput_AovS(vectorVectorizedCoordinate &input, const size_t size)
 {
  //!Creates the random numbers
  std::default_random_engine engine(time(nullptr));
@@ -50,42 +50,38 @@ void AovS(benchmark::State &state)
  const std::string label(getLabelString("-AovS/", state.range_x(), 1));
  //!The size of the values to process
  const size_t inputSize = state.range_x();
-
+ //!The size of the container
  size_t containerSize = numberOfChunks(inputSize, float_v::size());
- //!Die Werte, die berechnet werden sollen
- vectorVectorizedCoordinate      inputValues;
- //!Die Ergebnisse, die berechnet wurden
- vectorVectorizedPolarCoordinate outputValues;
+
+ //!The input and output values for calculation
+ vectorVectorizedCoordinate      inputValues(containerSize);
+ vectorVectorizedPolarCoordinate outputValues(containerSize);
  size_t n;
 
-     //!Wir allokieren
-    inputValues.reserve(containerSize);
-    outputValues.reserve(containerSize);
-
-        //!Eingabewerte holen
-            simulateInput(inputValues, containerSize);
-            for(n = ((containerSize*float_v::size()) - inputSize); n > 0; n--)
+        //!Creation of input values
+            simulateInput_AovS(inputValues, containerSize);
+            for(n = 0; n < float_v::size(); n++)
             {
-                inputValues[(containerSize - 1)].x[(float_v::size() - n)] = 1.0f;
-                inputValues[(containerSize - 1)].y[(float_v::size() - n)] = 1.0f;
+                inputValues[(containerSize - 1)].x[n] = 1.0f;
+                inputValues[(containerSize - 1)].y[n] = 1.0f;
             }
 
-        //!Eingabewerte geholt
+        //!Creation of input values completed
 
         while(state.KeepRunning())
         {
-            //!Berechnung starten
+            //!Calculation of all the input values
             for(n = 0; n < containerSize; n++)
             {
                 std::tie(outputValues[n].radius, outputValues[n].phi) = calcularePolarCoordinate(inputValues[n].x, inputValues[n].y);
             }
         }
 
-    //!Google mitteilen welche Daten verarbeitet wurden
+    //!Tell the Benchmark how many values are calculated
     state.SetItemsProcessed(state.iterations() * state.range_x());
     state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-    //!Das Label setzen
+    //!Set the label
     state.SetLabel(label);
 
     #ifdef USE_LOG

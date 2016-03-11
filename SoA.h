@@ -34,7 +34,7 @@ typedef ArrayOfPolarCoordinates<VCvectorFloat> VcArrayOfPolarCoordinates;
 
 //!Creates random numbers for SoA
 template<typename T>
-void simulateInput(ArrayOfCoordinates<T> &input, const size_t size)
+void simulateInput_SoA(ArrayOfCoordinates<T> &input, const size_t size)
 {
  //!Creates the random numbers
  std::default_random_engine engine(time(nullptr));
@@ -81,13 +81,13 @@ void SoA_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues.x[n] = 1.0f;
-                inputValues.y[n] = 1.0f;
+                inputValues.x[(containerSize - n)] = 1.0f;
+                inputValues.y[(containerSize - n)] = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -157,13 +157,13 @@ void SoA_LoadStore_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues.x[n] = 1.0f;
-                inputValues.y[n] = 1.0f;
+                inputValues.x[(containerSize - n)] = 1.0f;
+                inputValues.y[(containerSize - n)] = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -200,7 +200,7 @@ void SoA_LoadStore_Padding(benchmark::State &state)
 void SoA_GatherScatter_Padding(benchmark::State &state)
 {
  //!The label for the plotter
- const std::string label(getLabelString("SoA_GatherScatter()_Padding/", state.range_x(), 1));
+ const std::string label(getLabelString("SoA_GatherScatter[]_Padding/", state.range_x(), 1));
  //!The size of the values to process
  const size_t inputSize = state.range_x();
  //!The size of the container
@@ -229,13 +229,13 @@ void SoA_GatherScatter_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues.x[n] = 1.0f;
-                inputValues.y[n] = 1.0f;
+                inputValues.x[(containerSize - n)] = 1.0f;
+                inputValues.y[(containerSize - n)] = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -274,7 +274,7 @@ void SoA_GatherScatter_Padding(benchmark::State &state)
 void SoA_GatherScatterFunc_Padding(benchmark::State &state)
 {
  //!The label for the plotter
- const std::string label(getLabelString("SoA_GatherScatter_Padding/", state.range_x(), 1));
+ const std::string label(getLabelString("SoA_GatherScatter()_Padding/", state.range_x(), 1));
  //!The size of the values to process
  const size_t inputSize = state.range_x();
  //!The size of the container
@@ -303,13 +303,13 @@ void SoA_GatherScatterFunc_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues.x[n] = 1.0f;
-                inputValues.y[n] = 1.0f;
+                inputValues.x[(containerSize - n)] = 1.0f;
+                inputValues.y[(containerSize - n)] = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -374,7 +374,7 @@ void SoA_RestScalar(benchmark::State &state)
         outputValues.phi.reserve(inputSize);
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -450,7 +450,7 @@ void SoA_LoadStore_RestScalar(benchmark::State &state)
         outputValues.phi.reserve(inputSize);
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -494,7 +494,7 @@ void SoA_LoadStore_RestScalar(benchmark::State &state)
 void SoA_GatherScatter_RestScalar(benchmark::State &state)
 {
  //!The label for the plotter
- const std::string label(getLabelString("SoA_GatherScatter_RestScalar/", state.range_x(), 1));
+ const std::string label(getLabelString("SoA_GatherScatter[]_RestScalar/", state.range_x(), 1));
  //!The size of the values to process
  const size_t inputSize = state.range_x();
  //!The size of the values without a full vc-vector
@@ -522,7 +522,7 @@ void SoA_GatherScatter_RestScalar(benchmark::State &state)
         outputValues.phi.reserve(inputSize);
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -596,7 +596,7 @@ void SoA_GatherScatterFunc_RestScalar(benchmark::State &state)
         outputValues.phi.reserve(inputSize);
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_SoA(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())

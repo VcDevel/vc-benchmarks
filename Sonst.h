@@ -3,7 +3,7 @@
 using Vc::float_v;
 
 //!Creates random numbers
-void simulateInput(float_v &inputX, float_v &inputY)
+void simulateInput_v(float_v &inputX, float_v &inputY)
 {
  //!Creates the random numbers
  std::default_random_engine engine(time(nullptr));
@@ -23,6 +23,8 @@ void baselineCalculation(benchmark::State &state)
 {
  //!The label for the plotter
  const std::string label(getLabelString("Baseline/", state.range_x(), 1));
+ //!The size of the container
+ size_t containerSize = numberOfChunks(state.range_x(), sizeof(float_v));
 
  //!Keeps the input values in a vc-vector
  float_v coordinateX;
@@ -32,17 +34,22 @@ void baselineCalculation(benchmark::State &state)
  float_v radius;
  float_v phi;
 
+ size_t n;
+
         //!Creation of input values
-            simulateInput(coordinateX, coordinateY);
+            simulateInput_v(coordinateX, coordinateY);
         //!Creation of input values completed
 
         while(state.KeepRunning())
         {
-            //!Prevent the optimizer from optimizing
-            asm volatile("":"+x"(coordinateX), "+x"(coordinateY));
-                //!Calculates only one value
-                std::tie(radius, phi) = calcularePolarCoordinate(coordinateX, coordinateY);
-            asm volatile(""::"x"(radius), "x"(phi));
+            for(n = 0; n < containerSize; n++)
+            {
+                //!Prevent the optimizer from optimizing
+                asm volatile("":"+x"(coordinateX), "+x"(coordinateY));
+                    //!Calculates only one value
+                    std::tie(radius, phi) = calcularePolarCoordinate(coordinateX, coordinateY);
+                asm volatile(""::"x"(radius), "x"(phi));
+            }
         }
 
     //!Tell the benchnmark how many values are calculated
@@ -70,9 +77,8 @@ void Scalar(benchmark::State &state)
  vectorPolarCoordinate outputValues(inputSize);
  size_t n;
 
-
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())

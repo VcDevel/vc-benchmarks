@@ -30,7 +30,7 @@ typedef Vc::vector<PolarCoordinate, Vc::Allocator<PolarCoordinate>> VCvectorPola
 
 //!Creates random numbers for AoS
 template <typename T>
-void simulateInput(T &input, const size_t size)
+void simulateInput_AoS(T &input, const size_t size)
 {
  typedef typename T::iterator iterator;
 
@@ -50,6 +50,7 @@ void simulateInput(T &input, const size_t size)
         {
             aktElement->x = random(engine);
             aktElement->y = random(engine);
+            aktElement++;
         }
 }
 
@@ -79,13 +80,12 @@ void AoS_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues[n].x = 1.0f;
-                inputValues[n].y = 1.0f;
+                inputValues[(containerSize - n)].x = 1.0f;
+                inputValues[(containerSize - n)].y = 1.0f;
             }
-
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -154,13 +154,13 @@ void AoS_Interleaved_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues[n].x = 1.0f;
-                inputValues[n].y = 1.0f;
+                inputValues[(containerSize - n)].x = 1.0f;
+                inputValues[(containerSize - n)].y = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -195,7 +195,7 @@ void AoS_Interleaved_Padding(benchmark::State &state)
 void AoS_GatherScatter_Padding(benchmark::State &state)
 {
  //!The label for the plotter
- const std::string label(getLabelString("AoS_GatherScatter[][]_Padding/", state.range_x(), 1));
+ const std::string label(getLabelString("AoS_GatherScatter[]_Padding/", state.range_x(), 1));
  //!The size of the values to process
  const size_t inputSize = state.range_x();
  //!The size of the container
@@ -219,13 +219,13 @@ void AoS_GatherScatter_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues[n].x = 1.0f;
-                inputValues[n].y = 1.0f;
+                inputValues[(containerSize - n)].x = 1.0f;
+                inputValues[(containerSize - n)].y = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -291,13 +291,13 @@ void AoS_GatherScatterFunc_Padding(benchmark::State &state)
 
         //!Creation of input values
             //!The values of the last container are set to 1.0f for the padding
-            for(n = (containerSize - 1); n >= (containerSize - float_v::size()); n--)
+            for(n = 1; n <= float_v::size(); n++)
             {
-                inputValues[n].x = 1.0f;
-                inputValues[n].y = 1.0f;
+                inputValues[(containerSize - n)].x = 1.0f;
+                inputValues[(containerSize - n)].y = 1.0f;
             }
 
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -364,7 +364,7 @@ void AoS_RestScalar(benchmark::State &state)
  size_t n, m;
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -439,7 +439,7 @@ void AoS_Interleaved_RestScalar(benchmark::State &state)
  size_t n;
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -482,7 +482,7 @@ void AoS_Interleaved_RestScalar(benchmark::State &state)
 void AoS_GatherScatter_RestScalar(benchmark::State &state)
 {
  //!The label for the plotter
- const std::string label(getLabelString("AoS_GatherScatter_RestScalar/", state.range_x(), 1));
+ const std::string label(getLabelString("AoS_GatherScatter[]_RestScalar/", state.range_x(), 1));
  //!The size of the values to process
  const size_t inputSize = state.range_x();
  //!The size of the values without a full vc-vector
@@ -505,7 +505,7 @@ void AoS_GatherScatter_RestScalar(benchmark::State &state)
  size_t n;
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
@@ -575,7 +575,7 @@ void AoS_GatherScatterFunc_RestScalar(benchmark::State &state)
  size_t n;
 
         //!Creation of input values
-            simulateInput(inputValues, inputSize);
+            simulateInput_AoS(inputValues, inputSize);
         //!Creation of input values completed
 
         while(state.KeepRunning())
