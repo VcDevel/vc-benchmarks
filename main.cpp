@@ -1,7 +1,7 @@
 #define USE_GOOGLE
 //#undef USE_GOOGLE
 #define USE_LOG
-#undef USE_LOG
+//#undef USE_LOG
 
 #include "BenchmarkHelper.h"
 #include "VectorizationHelper.h"
