@@ -45,7 +45,7 @@ void baselineCalculation(benchmark::State &state)
             for(n = 0; n < containerSize; n++)
             {
                 //!Prevent the optimizer from optimizing
-                asm volatile("":"+x"(coordinateX), "+x"(coordinateY));
+                asm volatile("":"+m"(coordinateX), "+m"(coordinateY));
                     //!Calculates only one value
                     std::tie(radius, phi) = calcularePolarCoordinate(coordinateX, coordinateY);
                 asm volatile(""::"x"(radius), "x"(phi));

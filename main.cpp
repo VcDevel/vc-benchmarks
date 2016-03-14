@@ -31,11 +31,10 @@ void sizesToL1CacheSize(benchmark::internal::Benchmark *function)
         }
 }
 
-//!Tests the L2-Cache sizes form my PC
+//!Tests the L2-Cache sizes from my PC
 void sizesToL2CacheSize(benchmark::internal::Benchmark *function)
 {
- int sizes[] = {1, 2, 4, 6, 8, 16, 19, 24, 29, 32, 43, 54, 64, 75, 86, 97, 108, 119, 128, 139, 148, 157, 166, 175, 184, 193, 202, 213, 224, 235, 246, 256, 278, 300, 321, 343, 364, 385, 400, 433, 465, 499, 512, 544, 584, 633, 666, 1000, 1024, 1300, 1655, 1998, 2048, 2356, 2654, 2967, 3299, 3666, 3988, 4096, 6333, 8192, 9999,
-                12333, 14444, 16384, 18770, 22456, 26666, 30233, 32768, 38622, 42333, 48665, 53535, 60066, 62000, 65536};
+ int sizes[] = {8192, 9999, 12333, 14444, 16384, 18770, 22456, 26666, 30233, 32768, 38622, 42333, 48665, 53535, 60066, 62000, 65536};
  size_t n;
 
     for(n = 0; n < (sizeof(sizes)/sizeof(int)); n++)
@@ -44,10 +43,22 @@ void sizesToL2CacheSize(benchmark::internal::Benchmark *function)
     }
 }
 
-void (*applyFunction)(benchmark::internal::Benchmark*) = sizesToL2CacheSize;
+//!Tests the L3-Cache sizes from my PC
+void sizesToL3CacheSize(benchmark::internal::Benchmark *function)
+{
+ int sizes[] = {65536, 85066, 102023,  131072, 155295, 262144, 434595, 524288, 600345, 768000, 834402, 1048576};
+ size_t n;
+
+    for(n = 0; n < (sizeof(sizes)/sizeof(int)); n++)
+    {
+        function->Arg(sizes[n]);
+    }
+}
+
+void (*applyFunction)(benchmark::internal::Benchmark*) = sizesToL3CacheSize;
 
 //!Scalar
-//BENCHMARK(Scalar)                           ->Apply(applyFunction);
+BENCHMARK(Scalar)                           ->Apply(applyFunction);
 
 //!Start of AoS
 BENCHMARK(AoS_Padding)                      ->Apply(applyFunction);
