@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 //#undef USE_LOG
 
 #include "BenchmarkHelper.h"
-#include "VectorizationHelper.h"
+#include "Mathfunctions.h"
 
 #include "AoS.h"
 #include "AovS.h"
