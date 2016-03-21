@@ -46,7 +46,7 @@ typedef std::vector<VectorizedPolarCoordinate, Vc::Allocator<VectorizedPolarCoor
 //! Creates random numbers for AovS
 void simulateInput_AovS(vectorVectorizedCoordinate &input, const size_t size) {
   //! Creates the random numbers
-  std::default_random_engine engine(time(nullptr));
+  std::mt19937 engine(std::random_device{}());
   //! Adjust the random number to a range
   std::uniform_real_distribution<float> random(-1.0f, 1.0f);
   //! For iterating over the input
@@ -92,7 +92,7 @@ void AovS(benchmark::State &state) {
     //! Calculation of all the input values
     for (n = 0; n < containerSize; n++) {
       std::tie(outputValues[n].radius, outputValues[n].phi) =
-          calcularePolarCoordinate(inputValues[n].x, inputValues[n].y);
+          calculatePolarCoordinate(inputValues[n].x, inputValues[n].y);
     }
   }
 

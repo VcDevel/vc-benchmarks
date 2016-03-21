@@ -75,20 +75,20 @@ void sizesToL3CacheSize(benchmark::internal::Benchmark *function) {
   }
 }
 
-void (*applyFunction)(benchmark::internal::Benchmark *) = sizesToL3CacheSize;
+void (*applyFunction)(benchmark::internal::Benchmark *) = sizesToL1CacheSize;
 
 //! Scalar
 BENCHMARK(Scalar)->Apply(applyFunction);
 
 //! Start of AoS
 BENCHMARK(AoS_Padding)->Apply(applyFunction);
-BENCHMARK(AoS_RestScalar)->Apply(applyFunction);
+BENCHMARK(AoS_RestScalar)->UseRealTime()->Apply(applyFunction);
 
-BENCHMARK(AoS_Interleaved_Padding)->Apply(applyFunction);
-BENCHMARK(AoS_Interleaved_RestScalar)->Apply(applyFunction);
+BENCHMARK(AoS_Interleaved_Padding)->UseRealTime()->Apply(applyFunction);
+BENCHMARK(AoS_Interleaved_RestScalar)->UseRealTime()->Apply(applyFunction);
 
-BENCHMARK(AoS_GatherScatter_Padding)->Apply(applyFunction);
-BENCHMARK(AoS_GatherScatter_RestScalar)->Apply(applyFunction);
+BENCHMARK(AoS_GatherScatter_Padding)->UseRealTime()->Apply(applyFunction);
+BENCHMARK(AoS_GatherScatter_RestScalar)->UseRealTime()->Apply(applyFunction);
 
 BENCHMARK(AoS_GatherScatterFunc_Padding)->Apply(applyFunction);
 BENCHMARK(AoS_GatherScatterFunc_RestScalar)->Apply(applyFunction);

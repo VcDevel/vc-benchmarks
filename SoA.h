@@ -57,7 +57,7 @@ typedef ArrayOfPolarCoordinates<VCvectorFloat> VcArrayOfPolarCoordinates;
 template <typename T>
 void simulateInput_SoA(ArrayOfCoordinates<T> &input, const size_t size) {
   //! Creates the random numbers
-  std::default_random_engine engine(time(nullptr));
+  std::mt19937 engine(std::random_device{}());
   //! Adjust the random number to a range
   std::uniform_real_distribution<float> random(-1.0f, 1.0f);
   size_t n;
@@ -117,7 +117,7 @@ void SoA_Padding(benchmark::State &state) {
       }
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       for (m = 0; m < float_v::size(); m++) {
@@ -186,7 +186,7 @@ void SoA_LoadStore_Padding(benchmark::State &state) {
       coordinateY_v.load((inputValues.y.data() + n));
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       radius_v.store((outputValues.radius.data() + n));
@@ -257,7 +257,7 @@ void SoA_GatherScatter_Padding(benchmark::State &state) {
       coordinateY_v = inputValues.y[indexes];
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       outputValues.radius[indexes] = radius_v;
@@ -329,7 +329,7 @@ void SoA_GatherScatterFunc_Padding(benchmark::State &state) {
       coordinateY_v.gather(inputValues.y.data(), indexes);
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       radius_v.scatter(outputValues.radius.data(), indexes);
@@ -392,7 +392,7 @@ void SoA_RestScalar(benchmark::State &state) {
       }
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       for (m = 0; m < float_v::size(); m++) {
@@ -405,7 +405,7 @@ void SoA_RestScalar(benchmark::State &state) {
     for (n = (inputSize - missingSize); n < inputSize; n++) {
       //! Scalar Calculation
       std::tie(outputValues.radius[n], outputValues.phi[n]) =
-          calcularePolarCoordinate(inputValues.x[n], inputValues.y[n]);
+          calculatePolarCoordinate(inputValues.x[n], inputValues.y[n]);
     }
   }
 
@@ -462,7 +462,7 @@ void SoA_LoadStore_RestScalar(benchmark::State &state) {
       coordinateY_v.load((inputValues.y.data() + n));
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       radius_v.store((outputValues.radius.data() + n));
@@ -473,7 +473,7 @@ void SoA_LoadStore_RestScalar(benchmark::State &state) {
     for (n = (inputSize - missingSize); n < inputSize; n++) {
       //! Scalar calculation
       std::tie(outputValues.radius[n], outputValues.phi[n]) =
-          calcularePolarCoordinate(inputValues.x[n], inputValues.y[n]);
+          calculatePolarCoordinate(inputValues.x[n], inputValues.y[n]);
     }
   }
 
@@ -533,7 +533,7 @@ void SoA_GatherScatter_RestScalar(benchmark::State &state) {
       coordinateY_v.gather(inputValues.y.data(), indexes);
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       radius_v.scatter(outputValues.radius.data(), indexes);
@@ -545,7 +545,7 @@ void SoA_GatherScatter_RestScalar(benchmark::State &state) {
     for (n = (inputSize - missingSize); n < inputSize; n++) {
       //! Scalar calculation
       std::tie(outputValues.radius[n], outputValues.phi[n]) =
-          calcularePolarCoordinate(inputValues.x[n], inputValues.y[n]);
+          calculatePolarCoordinate(inputValues.x[n], inputValues.y[n]);
     }
   }
 
@@ -605,7 +605,7 @@ void SoA_GatherScatterFunc_RestScalar(benchmark::State &state) {
       coordinateY_v.gather(inputValues.y.data(), indexes);
 
       //! Calculate the polarcoordinates
-      std::tie(radius_v, phi_v) = calcularePolarCoordinate(coordinateX_v, coordinateY_v);
+      std::tie(radius_v, phi_v) = calculatePolarCoordinate(coordinateX_v, coordinateY_v);
 
       //! Store the values from the vc-vector
       radius_v.scatter(outputValues.radius.data(), indexes);
@@ -617,7 +617,7 @@ void SoA_GatherScatterFunc_RestScalar(benchmark::State &state) {
     for (n = (inputSize - missingSize); n < inputSize; n++) {
       //! Scalar calculation
       std::tie(outputValues.radius[n], outputValues.phi[n]) =
-          calcularePolarCoordinate(inputValues.x[n], inputValues.y[n]);
+          calculatePolarCoordinate(inputValues.x[n], inputValues.y[n]);
     }
   }
 

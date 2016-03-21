@@ -30,7 +30,7 @@ using Vc::float_v;
 //! Creates random numbers
 void simulateInput_v(float_v &inputX, float_v &inputY) {
   //! Creates the random numbers
-  std::default_random_engine engine(time(nullptr));
+  std::mt19937 engine(std::random_device{}());
   //! Adjust the random number to a range
   std::uniform_real_distribution<float> random(-1.0f, 1.0f);
   size_t n;
@@ -67,7 +67,7 @@ void baselineCalculation(benchmark::State &state) {
       //! Prevent the optimizer from optimizing
       asm volatile("" : "+m"(coordinateX), "+m"(coordinateY));
       //! Calculates only one value
-      std::tie(radius, phi) = calcularePolarCoordinate(coordinateX, coordinateY);
+      std::tie(radius, phi) = calculatePolarCoordinate(coordinateX, coordinateY);
       asm volatile("" ::"x"(radius), "x"(phi));
     }
   }
@@ -105,7 +105,7 @@ void Scalar(benchmark::State &state) {
     for (n = 0; n < inputSize; n++) {
       //! Scalar Calculation
       std::tie(outputValues[n].radius, outputValues[n].phi) =
-          calcularePolarCoordinate(inputValues[n].x, inputValues[n].y);
+          calculatePolarCoordinate(inputValues[n].x, inputValues[n].y);
     }
   }
 
