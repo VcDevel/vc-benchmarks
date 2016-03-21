@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "AoS.h"
 #include "AovS.h"
 #include "SoA.h"
-#include "Sonst.h"
+#include "AdditinalCalculations.h"
 
 #ifndef USE_GOOGLE
 //! Is only used for testing
