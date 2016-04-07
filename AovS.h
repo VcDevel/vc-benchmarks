@@ -67,8 +67,6 @@ void simulateInput_AovS(vectorVectorizedCoordinate &input, const size_t size) {
 
 //! AovS
 void AovS(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("-AovS/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -100,11 +98,8 @@ void AovS(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AovS\n";
 #endif
 }
 #endif // AOVS_H

@@ -78,8 +78,6 @@ template <typename T> void simulateInput_AoS(T &input, const size_t size) {
 
 //! AoS with a padding
 void AoS_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("AoS_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -132,18 +130,13 @@ void AoS_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_Padding\n";
 #endif
 }
 
 //! AoS unsing interleaved memory with a padding
 void AoS_Interleaved_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("AoS_Interleaved_Padding/", state.range_x(), 1));
   //! The size of values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -196,19 +189,13 @@ void AoS_Interleaved_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_Interleaved_Padding\n";
 #endif
 }
 
 //! Aos using Gather and Scatter as operator, with a padding
 void AoS_GatherScatter_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("AoS_GatherScatter[]_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -265,19 +252,13 @@ void AoS_GatherScatter_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_GatherScatter[]_Padding\n";
 #endif
 }
 
 //! Aos using Gather and Scatter as function, with a padding
 void AoS_GatherScatterFunc_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("AoS_GatherScatter()_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -335,18 +316,13 @@ void AoS_GatherScatterFunc_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_GatherScatter()_Padding\n";
 #endif
 }
 
 //! AoS with rest scalar
 void AoS_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("AoS_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -405,19 +381,13 @@ void AoS_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_RestScalar\n";
 #endif
 }
 
 //! AoS using interleaved memory, with rest scalar
 void AoS_Interleaved_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("AoS_Interleaved_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -470,19 +440,13 @@ void AoS_Interleaved_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_Interleaved_RestScalar\n";
 #endif
 }
 
 //! AoS using gather and scatter as operator, with rest scalar
 void AoS_GatherScatter_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("AoS_GatherScatter[]_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -538,19 +502,13 @@ void AoS_GatherScatter_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_GatherScatter[]_RestScalar\n";
 #endif
 }
 
 //! AoS using gather and scatter as function, with rest scalar
 void AoS_GatherScatterFunc_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("AoS_GatherScatter()_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -608,11 +566,8 @@ void AoS_GatherScatterFunc_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: AoS_GatherScatter()_RestScalar\n";
 #endif
 }
 #endif // AOS_H

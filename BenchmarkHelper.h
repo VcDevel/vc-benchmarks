@@ -25,15 +25,51 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef BENCHMARKHELPER_H
 #define BENCHMARKHELPER_H
 #include "benchmark/benchmark_api.h"
+#include <Vc/Vc>
 #include <string>
+#include <type_traits>
 
 inline void escape(void *p) { asm volatile("" : : "g"(p) : "memory"); }
 
 inline void clobber() { asm volatile("" : : : "memory"); }
 
-//! Generates a correct string for the plotter
-const std::string getLabelString(const char *functionTitle, int itemCount,
-                                 size_t itemSize) {
-  return std::string(functionTitle) + std::to_string(itemCount * itemSize);
+template<typename T>
+inline void fakeMemoryModification(T &modifiedValue) {
+    asm volatile("" : "+m"(modifiedValue));
+}
+
+template<typename T, typename B>
+inline void fakeRegisterModification(Vc::Vector<T, B> &modifiedValue) {
+    asm volatile("" : "+x"(modifiedValue));
+}
+
+template<typename T>
+inline void fakeRegisterModification(Vc::Vector<T, Vc::VectorAbi::Scalar> &modifiedValue) {
+    asm volatile("" : "+r"(modifiedValue));
+}
+
+template<typename T>
+inline typename std::enable_if<std::is_arithmetic<T>::value>::type fakeRegisterModification(T &modifiedValue) {
+    asm volatile("" : "+r"(modifiedValue));
+}
+
+template<typename T>
+inline void fakeMemoryRead(T &readedValue) {
+    asm volatile("" :: "m"(readedValue));
+}
+
+template<typename T, typename B>
+inline void fakeRegisterRead(Vc::Vector<T, B> &readedValue) {
+    asm volatile("" :: "x"(readedValue));
+}
+
+template<typename T>
+inline void fakeRegisterRead(Vc::Vector<T, Vc::VectorAbi::Scalar> &readedValue) {
+    asm volatile("" :: "r"(readedValue));
+}
+
+template<typename T>
+inline typename std::enable_if<std::is_arithmetic<T>::value>::type fakeRegisterRead(T &readedValue) {
+    asm volatile("" :: "r"(readedValue));
 }
 #endif

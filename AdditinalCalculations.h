@@ -43,10 +43,8 @@ void simulateInput_v(float_v &inputX, float_v &inputY) {
 
 //! For measuring the time of the polarcoordinate calculation
 void baselineCalculation(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("Baseline/", state.range_x(), 1));
   //! The size of the container
-  size_t containerSize = numberOfChunks(state.range_x(), sizeof(float_v));
+  size_t containerSize = numberOfChunks(state.range_x(), float_v::size());
 
   //! Keeps the input values in a vc-vector
   float_v coordinateX;
@@ -65,10 +63,12 @@ void baselineCalculation(benchmark::State &state) {
   while (state.KeepRunning()) {
     for (n = 0; n < containerSize; n++) {
       //! Prevent the optimizer from optimizing
-      asm volatile("" : "+m"(coordinateX), "+m"(coordinateY));
+      //asm volatile("" : "+m"(coordinateX), "+m"(coordinateY));
+      fakeMemoryModification(coordinateX); fakeMemoryModification(coordinateY);
       //! Calculates only one value
       std::tie(radius, phi) = calculatePolarCoordinate(coordinateX, coordinateY);
-      asm volatile("" ::"x"(radius), "x"(phi));
+      //asm volatile("" ::"x"(radius), "x"(phi));
+      fakeRegisterRead(radius); fakeRegisterRead(phi);
     }
   }
 
@@ -76,18 +76,15 @@ void baselineCalculation(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: Baseline\n";
 #endif
 }
 
+#include <Vc/cpuid.h>
+
 //! Scalar
 void Scalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString(".Scalar/", state.range_x(), 1));
   //! The size of the input values
   const size_t inputSize = state.range_x();
 
@@ -113,11 +110,8 @@ void Scalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: Scaler\n";
 #endif
 }
 #endif // SONST_H

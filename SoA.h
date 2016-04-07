@@ -70,8 +70,6 @@ void simulateInput_SoA(ArrayOfCoordinates<T> &input, const size_t size) {
 
 //! SoA with a padding
 void SoA_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("SoA_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -131,18 +129,13 @@ void SoA_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_Padding\n";
 #endif
 }
 
 //! SoA using load and store, with a padding
 void SoA_LoadStore_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("SoA_LoadStore_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -198,19 +191,13 @@ void SoA_LoadStore_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_LoadStore_Padding\n";
 #endif
 }
 
 //! SoA using gather and scatter as operator, with a padding
 void SoA_GatherScatter_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("SoA_GatherScatter[]_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -270,19 +257,13 @@ void SoA_GatherScatter_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_GatherScatter[]_Padding\n";
 #endif
 }
 
 //! SoA using gather and scatter as function, with a padding
 void SoA_GatherScatterFunc_Padding(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("SoA_GatherScatter()_Padding/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
@@ -342,18 +323,13 @@ void SoA_GatherScatterFunc_Padding(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_GatherScatter()_Padding\n";
 #endif
 }
 
 //! SoA with rest scalar
 void SoA_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(getLabelString("SoA_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -413,19 +389,13 @@ void SoA_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_RestScalar\n";
 #endif
 }
 
 //! SoA using load and Store, with rest scalar
 void SoA_LoadStore_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("SoA_LoadStore_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -481,19 +451,13 @@ void SoA_LoadStore_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_LoadStore_RestScalar\n";
 #endif
 }
 
 //! SoA using gather and scatter as operator, with rest scalar
 void SoA_GatherScatter_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("SoA_GatherScatter[]_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -553,19 +517,13 @@ void SoA_GatherScatter_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_GatherScatter[]_RestScalar\n";
 #endif
 }
 
 //! SoA using gather and scatter as function, with rest scalar
 void SoA_GatherScatterFunc_RestScalar(benchmark::State &state) {
-  //! The label for the plotter
-  const std::string label(
-      getLabelString("SoA_GatherScatter()_RestScalar/", state.range_x(), 1));
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
@@ -625,11 +583,8 @@ void SoA_GatherScatterFunc_RestScalar(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
-  //! Set the label
-  state.SetLabel(label);
-
 #ifdef USE_LOG
-  std::clog << "Finnished: " << label << "\n";
+  std::clog << "Finnished: SoA_GatherScatter()_RestScalar\n";
 #endif
 }
 #endif // SOA_H
