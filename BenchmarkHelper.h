@@ -72,4 +72,57 @@ template<typename T>
 inline typename std::enable_if<std::is_arithmetic<T>::value>::type fakeRegisterRead(T &readedValue) {
     asm volatile("" :: "r"(readedValue));
 }
+
+#define Vc_BENCHMARK_TEMPLATE_PLANSCHI(n, ...)            \
+template<unsigned int N>                                   \
+int BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)() { \
+std::string name(#n);                                        \
+name.append("<");                                        \
+name.append(typeToString<__VA_ARGS__::at<N>>());          \
+name.append(">");                                          \
+BENCHMARK_PRIVATE_DECLARE(n) =                              \
+      (::benchmark::internal::RegisterBenchmarkInternal( \
+        new ::benchmark::internal::FunctionBenchmark(     \
+        name.c_str(), n<__VA_ARGS__::at<N>>)));            \
+                                                            \
+        BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)<N - 1>(); \
+        return 0;                                                      \
+}                                                                       \
+                                                                         \
+template<>                                                            \
+int BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)<0u>()          \
+{                                                                       \
+std::string name(#n);                                                    \
+name.append("<");                                                     \
+name.append(typeToString<__VA_ARGS__::at<0>>());                       \
+name.append(">");                                                       \
+BENCHMARK_PRIVATE_DECLARE(n) =                                           \
+      (::benchmark::internal::RegisterBenchmarkInternal(             \
+        new ::benchmark::internal::FunctionBenchmark(                 \
+        name.c_str(), n<__VA_ARGS__::at<0>>)));                        \
+        return 0;                                                       \
+}                                                                        \
+int BENCHMARK_PRIVATE_CONCAT(variable, n, __LINE__) = BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)<__VA_ARGS__::size() - 1>()
+
+#define SCALAR_VECTORS Typelist<Vc::Scalar::double_v, Vc::Scalar::float_v, Vc::Scalar::int_v, Vc::Scalar::uint_v, Vc::Scalar::short_v, Vc::Scalar::ushort_v>
+#ifdef Vc_IMPL_SSE
+    #define SSE_VECTORS Typelist<Vc::SSE::double_v, Vc::SSE::float_v, Vc::SSE::int_v, Vc::SSE::uint_v, Vc::SSE::short_v, Vc::SSE::ushort_v>
+#else
+    #define SSE_VECTORS Typelist<>
+#endif // Vc_IMPL_SSE
+
+#ifdef Vc_IMPL_AVX
+    #define AVX_VECTORS Typelist<Vc::AVX::double_v, Vc::AVX::float_v>
+#else
+    #define AVX_VECTORS Typelist<>
+#endif // Vc_IMPL_AVX
+
+#ifdef Vc_IMPL_MIC
+    #define MIC_VECTORS Typelist<Vc::MIC::double_v, Vc::MIC::float_v, Vc::MIC::int_v, Vc::MIC::uint_v, Vc::MIC::short_v, Vc::MIC::ushort_v>
+#else
+    #define MIC_VECTORS Typelist<>
+#endif // Vc_IMPL_MIC
+
+#ifdef Vc_IMPL_AVX
+    #define ALL_VECTORS concat<SCALAR_VECTORS, SSE_VECTORS, AVX_VECTORS, MIC_VECTORS>
 #endif

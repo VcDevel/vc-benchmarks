@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 #include "BenchmarkHelper.h"
 #include "Mathfunctions.h"
+#include "VcToString.h"
 
 #include "Addition.h"
 
@@ -38,7 +39,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "SoA.h"
 #include "AdditinalCalculations.h"
 #include <Vc/cpuid.h>
-#include <typelist.h>
 
 #ifndef USE_GOOGLE
 //! Is only used for testing
@@ -165,70 +165,19 @@ BENCHMARK(baselineCalculation)->Apply(applyFunction)->UseRealTime();
 
 #ifdef BENCHMARKING_ADDITION
 
-#define Vc_BENCHMARK_TEMPLATE(n, ...)           \
-  BENCHMARK_PRIVATE_DECLARE(n) =             \
-      (::benchmark::internal::RegisterBenchmarkInternal( \
-        new ::benchmark::internal::FunctionBenchmark( \
-        #n "<" "Wuff D:" ">", n<__VA_ARGS__::at<0>::at<0>>)))
-
-#define Vc_BENCHMARK_TEMPLATE_IMPROVED(n, x, ...)           \
-  BENCHMARK_PRIVATE_DECLARE(n) =             \
-      (::benchmark::internal::RegisterBenchmarkInternal( \
-        new ::benchmark::internal::FunctionBenchmark( \
-        #n "<" #__VA_ARGS__::at<0> ">", n<__VA_ARGS__::at<x>>)))
-
-#define Vc_BENCHMARK_TEMPLATE_PLANSCHI(n, ...)       \
-template<unsigned int N>                              \
-int BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)() {                                 \
-BENCHMARK_PRIVATE_DECLARE(n) =                          \
-      (::benchmark::internal::RegisterBenchmarkInternal( \
-        new ::benchmark::internal::FunctionBenchmark(     \
-        #n "<" #__VA_ARGS__ ">", n<__VA_ARGS__::at<N>>))); \
-                                                            \
-        BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)<N - 1>();                             \
-        return 0;                                             \
-}                                                              \
-                                                                \
-template<>                                                       \
-int BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)<0u>()                                          \
-{                                                                  \
-BENCHMARK_PRIVATE_DECLARE(n) =                                      \
-      (::benchmark::internal::RegisterBenchmarkInternal(             \
-        new ::benchmark::internal::FunctionBenchmark(                 \
-        #n "<" #__VA_ARGS__ ">", n<__VA_ARGS__::at<0>>)));             \
-        return 0;                                                       \
-}                                                                        \
-int BENCHMARK_PRIVATE_CONCAT(variable, n, __LINE__) = BENCHMARK_PRIVATE_CONCAT(typeListFunc, n, __LINE__)<__VA_ARGS__::size() - 1>();
-
-/*(void (*)(benchmark::State&)) (*functionPtr)() = []() {
-                                return &additionVectorVector<int_v>;
-                             };*/
-
-/*template<typename T>
-::benchmark::internal::Benchmark* zws(const char *name) {
-    std::cout << typeid(T).name() << " :3 " << name << "\n";
-
-    return nullptr;//::benchmark::internal::RegisterBenchmarkInternal(new ::benchmark::internal::FunctionBenchmark(additionVectorVector<T::at<0>>));
-}*/
-
-
 //Was Matthias will:
 //Vc_BENCHMARK(additionVectorVector, ALL_VECTOR_TYPES)->UseRealTime();
 //typelist.h in Vc soll helfen
 
 #ifdef Vc_IMPL_SSE
-Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector,
-    Typelist<int_v, float_v>)//->UseRealTime());
-
-Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector,
-    Typelist<int_v, float_v>)//->UseRealTime());
-//Vc_BENCHMARK_TEMPLATE(additionVectorVector, Vc::SSE::int_v)->UseRealTime();
+//Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, SSE_VECTORS);
 #endif
 
 #ifdef Vc_IMPL_AVX
-//Vc_BENCHMARK_TEMPLATE(additionVectorVector, Vc::AVX::double_v)->UseRealTime();
-//Vc_BENCHMARK_TEMPLATE(additionVectorVector, Vc::AVX::int_v)->UseRealTime();
+//Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, AVX_VECTORS);
 #endif
+
+Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, ALL_VECTORS);
 
 /*#ifdef Vc_IMPL_MIC
 BENCHMARK_TEMPLATE(additionVectorVector, Vc::MIC::double_v)->UseRealTime();
