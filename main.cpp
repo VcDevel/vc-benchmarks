@@ -28,56 +28,53 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 //#define BENCHMARKING_DATA_LAYOUT
 #define BENCHMARKING_ADDITION
 
-#include "BenchmarkHelper.h"
-#include "Mathfunctions.h"
-#include "VcToString.h"
+#include "benchmarkhelper.h"
+#include "mathfunctions.h"
+#include "vctostring.h"
 
-#include "Addition.h"
-
-#include "AoS.h"
-#include "AovS.h"
-#include "SoA.h"
-#include "AdditinalCalculations.h"
+#include "addition.h"
+#include "aos.h"
+#include "aovs.h"
+#include "soa.h"
+#include "additinalcalculations.h"
 #include <Vc/cpuid.h>
 
 #ifndef USE_GOOGLE
 //! Is only used for testing
 int main() {
-    std::cout <<
+  std::cout < <
 
-     << "\n";
-    return 0;
+      < < "\n";
+  return 0;
 }
 #else
 using Vc::CpuId;
 
 //! Tests the L1-Cache sizes dynamicly
 void dynamicL1CacheSize(benchmark::internal::Benchmark *function) {
-    size_t n;
+  CpuId::init();
+  for (size_t n = 1; n < (float_v::size() + 1); n += 2) {
+    function->Arg(n);
+  }
 
-    CpuId::init();
-    for(n = 1; n < (float_v::size() + 1); n += 2) {
-        function->Arg(n);
-    }
-
-    function->Range((float_v::size()*2), CpuId::L1Data());
+  function->Range((float_v::size() * 2), CpuId::L1Data());
 }
 
 //! Tests the L2-Cache sizes dynamicly
 void dynamicL2CacheSize(benchmark::internal::Benchmark *function) {
-    CpuId::init();
+  CpuId::init();
 
-    function->Arg(CpuId::L1Data());
-    function->Arg(CpuId::L2Data() >> 2);
+  function->Arg(CpuId::L1Data());
+  function->Arg(CpuId::L2Data() >> 2);
 
-    function->Arg(CpuId::L2Data());
+  function->Arg(CpuId::L2Data());
 }
 
 //! Tests the L3-Cache sizes dynamicly
 void dynamicL3CacheSize(benchmark::internal::Benchmark *function) {
-    CpuId::init();
+  CpuId::init();
 
-    function->Range(CpuId::L2Data(), CpuId::L3Data());
+  function->Range(CpuId::L2Data(), CpuId::L3Data());
 }
 
 //! Tests the L1-Cache sizes from my PC
@@ -86,9 +83,8 @@ void sizesToL1CacheSize(benchmark::internal::Benchmark *function) {
                  41,   53,   64,   70,   88,   109,  128,  177,  201,  256,
                  356,  566,  789,  1024, 1234, 1323, 1600, 1899, 2048, 2934,
                  3433, 3677, 4096, 4304, 4666, 4900, 5555, 7809, 8000, 8192};
-  size_t n;
 
-  for (n = 0; n < (sizeof(sizes) / sizeof(int)); n++) {
+  for (size_t n = 0; n < (sizeof(sizes) / sizeof(int)); n++) {
     function->Arg(sizes[n]);
   }
 }
@@ -97,9 +93,8 @@ void sizesToL1CacheSize(benchmark::internal::Benchmark *function) {
 void sizesToL2CacheSize(benchmark::internal::Benchmark *function) {
   int sizes[] = {8192,  9999,  12333, 14444, 16384, 18770, 22456, 26666, 30233,
                  32768, 38622, 42333, 48665, 53535, 60066, 62000, 65536};
-  size_t n;
 
-  for (n = 0; n < (sizeof(sizes) / sizeof(int)); n++) {
+  for (size_t n = 0; n < (sizeof(sizes) / sizeof(int)); n++) {
     function->Arg(sizes[n]);
   }
 }
@@ -108,9 +103,8 @@ void sizesToL2CacheSize(benchmark::internal::Benchmark *function) {
 void sizesToL3CacheSize(benchmark::internal::Benchmark *function) {
   int sizes[] = {65536,  85066,  102023, 131072, 155295, 262144,
                  434595, 524288, 600345, 768000, 834402, 1048576};
-  size_t n;
 
-  for (n = 0; n < (sizeof(sizes) / sizeof(int)); n++) {
+  for (size_t n = 0; n < (sizeof(sizes) / sizeof(int)); n++) {
     function->Arg(sizes[n]);
   }
 }
@@ -123,76 +117,51 @@ void baselineSeries(benchmark::internal::Benchmark *function) {
 }
 
 void (*applyFunction)(benchmark::internal::Benchmark *) = dynamicL2CacheSize;
-static std::vector<void (*)()> helper;
 
 #ifdef BENCHMARKING_DATA_LAYOUT
 //! Scalar
 BENCHMARK(Scalar)->Apply(applyFunction)->UseRealTime();
 
 //! Start of AoS
-BENCHMARK(AoS_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(AoS_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithPadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithRestScalar)->Apply(applyFunction)->UseRealTime();
 
-BENCHMARK(AoS_Interleaved_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(AoS_Interleaved_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithInterleavedPadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithInterleavedRestScalar)->Apply(applyFunction)->UseRealTime();
 
-BENCHMARK(AoS_GatherScatter_Padding)->UseRealTime()->Apply(applyFunction)->UseRealTime();
-BENCHMARK(AoS_GatherScatter_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithGatherScatterPadding)
+    ->UseRealTime()
+    ->Apply(applyFunction)
+    ->UseRealTime();
+BENCHMARK(aosWithGatherScatterRestScalar)->Apply(applyFunction)->UseRealTime();
 
-BENCHMARK(AoS_GatherScatterFunc_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(AoS_GatherScatterFunc_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithGatherScatterAsFunctionPadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aosWithGatherScatterAsFunctionRestScalar)->Apply(applyFunction)->UseRealTime();
 
 //! AovS
-BENCHMARK(AovS)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(aovs)->Apply(applyFunction)->UseRealTime();
 
 //! Start of SoA
-BENCHMARK(SoA_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(SoA_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithPadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithRestScalar)->Apply(applyFunction)->UseRealTime();
 
-BENCHMARK(SoA_LoadStore_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(SoA_LoadStore_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithLoadStorePadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithLoadStoreRestScalar)->Apply(applyFunction)->UseRealTime();
 
-BENCHMARK(SoA_GatherScatter_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(SoA_GatherScatter_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithGatherScatterPadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithGatherScatterRestScalar)->Apply(applyFunction)->UseRealTime();
 
-BENCHMARK(SoA_GatherScatterFunc_Padding)->Apply(applyFunction)->UseRealTime();
-BENCHMARK(SoA_GatherScatterFunc_RestScalar)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithGatherScatterAsFunctionPadding)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(soaWithGatherScatterAsFunctionRestScalar)->Apply(applyFunction)->UseRealTime();
 
 //! Baseline
-BENCHMARK(baselineCalculation)->Apply(applyFunction)->UseRealTime();
+BENCHMARK(baseline)->Apply(applyFunction)->UseRealTime();
 
 #endif // BENCHMARKING_DATA_LAYOUT
 
 #ifdef BENCHMARKING_ADDITION
+Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, Vc_ALL_VECTORS);
+#endif // BENCHMARKING_ADDITION
 
-//Was Matthias will:
-//Vc_BENCHMARK(additionVectorVector, ALL_VECTOR_TYPES)->UseRealTime();
-//typelist.h in Vc soll helfen
-
-#ifdef Vc_IMPL_SSE
-//Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, SSE_VECTORS);
-#endif
-
-#ifdef Vc_IMPL_AVX
-//Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, AVX_VECTORS);
-#endif
-
-Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, ALL_VECTORS);
-
-/*#ifdef Vc_IMPL_MIC
-BENCHMARK_TEMPLATE(additionVectorVector, Vc::MIC::double_v)->UseRealTime();
-#endif // Vc_IMPL_MIC
-#ifdef Vc_IMPL_AVX
-BENCHMARK_TEMPLATE(additionVectorVector, Vc::AVX::double_v)->UseRealTime();
-BENCHMARK_TEMPLATE(additionVectorVector, Vc::SSE::double_v)->UseRealTime();
-
-BENCHMARK_TEMPLATE(additionVectorVector, Vc::Scalar::double_v)->UseRealTime();*/
-#endif
-
-//BENCHMARK_MAIN();
-int main(int argc, char **argv) {
-    ::benchmark::Initialize(&argc, argv);
-    ::benchmark::RunSpecifiedBenchmarks();
-}
+BENCHMARK_MAIN();
 #endif // USE_GOOGLE
-

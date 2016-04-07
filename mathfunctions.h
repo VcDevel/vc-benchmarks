@@ -22,10 +22,11 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
-#pragma once
-#include <Vc/Vc>
+#ifndef MATH_FUNCTIONS_H
+#define MATH_FUNCTIONS_H
 #include <math.h>
 #include <tuple>
+#include <Vc/Vc>
 
 using Vc::float_v;
 using Vc::sqrt;
@@ -41,4 +42,4 @@ inline std::tuple<T, T> calculatePolarCoordinate(const T &x, const T &y) {
 constexpr size_t numberOfChunks(size_t inputSize, size_t chunkSize) {
   return (inputSize + chunkSize - 1) / chunkSize;
 }
-
+#endif // MATH_FUNCTIONS_H

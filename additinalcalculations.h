@@ -22,53 +22,33 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
-#ifndef SONST_H
-#define SONST_H
+#ifndef ADDITINAL_CALCULATIONS_H
+#define ADDITINAL_CALCULATIONS_H
 
 using Vc::float_v;
 
-//! Creates random numbers
-void simulateInput_v(float_v &inputX, float_v &inputY) {
-  //! Creates the random numbers
-  std::mt19937 engine(std::random_device{}());
-  //! Adjust the random number to a range
-  std::uniform_real_distribution<float> random(-1.0f, 1.0f);
-  size_t n;
-
-  for (n = 0; n < float_v::size(); n++) {
-    inputX[n] = random(engine);
-    inputY[n] = random(engine);
-  }
-}
-
 //! For measuring the time of the polarcoordinate calculation
-void baselineCalculation(benchmark::State &state) {
+void baseline(benchmark::State &state) {
   //! The size of the container
   size_t containerSize = numberOfChunks(state.range_x(), float_v::size());
 
   //! Keeps the input values in a vc-vector
-  float_v coordinateX;
-  float_v coordinateY;
+  float_v vCoordinateX(float_v::Random());
+  float_v vCoordinateY(float_v::Random());
 
   //! Keeps the output values in a vc-vector
-  float_v radius;
-  float_v phi;
-
-  size_t n;
-
-  //! Creation of input values
-  simulateInput_v(coordinateX, coordinateY);
-  //! Creation of input values completed
+  float_v vRadius;
+  float_v vPhi;
 
   while (state.KeepRunning()) {
-    for (n = 0; n < containerSize; n++) {
+    for (size_t n = 0; n < containerSize; n++) {
       //! Prevent the optimizer from optimizing
-      //asm volatile("" : "+m"(coordinateX), "+m"(coordinateY));
-      fakeMemoryModification(coordinateX); fakeMemoryModification(coordinateY);
+      fakeMemoryModification(vCoordinateX);
+      fakeMemoryModification(vCoordinateY);
       //! Calculates only one value
-      std::tie(radius, phi) = calculatePolarCoordinate(coordinateX, coordinateY);
-      //asm volatile("" ::"x"(radius), "x"(phi));
-      fakeRegisterRead(radius); fakeRegisterRead(phi);
+      std::tie(vRadius, vPhi) = calculatePolarCoordinate(vCoordinateX, vCoordinateY);
+      fakeRegisterRead(vRadius);
+      fakeRegisterRead(vPhi);
     }
   }
 
@@ -81,25 +61,22 @@ void baselineCalculation(benchmark::State &state) {
 #endif
 }
 
-#include <Vc/cpuid.h>
-
 //! Scalar
-void Scalar(benchmark::State &state) {
+void scalar(benchmark::State &state) {
   //! The size of the input values
   const size_t inputSize = state.range_x();
 
   //! The input and output values for calculation
-  vectorCoordinate inputValues(inputSize);
-  vectorPolarCoordinate outputValues(inputSize);
-  size_t n;
+  VectorCoordinate inputValues(inputSize);
+  VectorPolarCoordinate outputValues(inputSize);
 
   //! Creation of input values
-  simulateInput_AoS(inputValues, inputSize);
+  simulateInputAos(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculate alle values
-    for (n = 0; n < inputSize; n++) {
+    for (size_t n = 0; n < inputSize; n++) {
       //! Scalar Calculation
       std::tie(outputValues[n].radius, outputValues[n].phi) =
           calculatePolarCoordinate(inputValues[n].x, inputValues[n].y);
@@ -114,4 +91,4 @@ void Scalar(benchmark::State &state) {
   std::clog << "Finnished: Scaler\n";
 #endif
 }
-#endif // SONST_H
+#endif // ADDITINAL_CALCULATIONS_H

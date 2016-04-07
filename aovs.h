@@ -28,37 +28,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 //! Stores coordinates with vectorized variables
 struct VectorizedCoordinate {
-  float_v x;
-  float_v y;
+  float_v vX;
+  float_v vY;
 };
 
 //! Stores polarcoordinate with vectorized variables
 struct VectorizedPolarCoordinate {
-  float_v radius;
-  float_v phi;
+  float_v vRadius;
+  float_v vPhi;
 };
 
 typedef std::vector<VectorizedCoordinate, Vc::Allocator<VectorizedCoordinate>>
-    vectorVectorizedCoordinate;
+    VectorVectorizedCoordinate;
 typedef std::vector<VectorizedPolarCoordinate, Vc::Allocator<VectorizedPolarCoordinate>>
-    vectorVectorizedPolarCoordinate;
+    VectorVectorizedPolarCoordinate;
 
 //! Creates random numbers for AovS
-void simulateInput_AovS(vectorVectorizedCoordinate &input, const size_t size) {
-  //! Creates the random numbers
-  std::mt19937 engine(std::random_device{}());
-  //! Adjust the random number to a range
-  std::uniform_real_distribution<float> random(-1.0f, 1.0f);
+void simulateInputAovs(VectorVectorizedCoordinate &input, const size_t size) {
   //! For iterating over the input
-  vectorVectorizedCoordinate::iterator aktElement = input.begin();
+  VectorVectorizedCoordinate::iterator aktElement = input.begin();
   //! The end of the iteration
-  vectorVectorizedCoordinate::iterator endElement = (input.begin() + size);
-  size_t m;
+  VectorVectorizedCoordinate::iterator endElement = (input.begin() + size);
 
   while (aktElement != endElement) {
-    for (m = 0; m < float_v::size(); m++) {
-      aktElement->x[m] = random(engine);
-      aktElement->y[m] = random(engine);
+    for (size_t m = 0; m < float_v::size(); m++) {
+      aktElement->vX = float_v::Random();
+      aktElement->vY = float_v::Random();
     }
 
     aktElement++;
@@ -66,31 +61,29 @@ void simulateInput_AovS(vectorVectorizedCoordinate &input, const size_t size) {
 }
 
 //! AovS
-void AovS(benchmark::State &state) {
+void aovs(benchmark::State &state) {
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
   size_t containerSize = numberOfChunks(inputSize, float_v::size());
 
   //! The input and output values for calculation
-  vectorVectorizedCoordinate inputValues(containerSize);
-  vectorVectorizedPolarCoordinate outputValues(containerSize);
-  size_t n;
+  VectorVectorizedCoordinate inputValues(containerSize);
+  VectorVectorizedPolarCoordinate outputValues(containerSize);
 
   //! Creation of input values
-  simulateInput_AovS(inputValues, containerSize);
-  for (n = 0; n < float_v::size(); n++) {
-    inputValues[(containerSize - 1)].x[n] = 1.0f;
-    inputValues[(containerSize - 1)].y[n] = 1.0f;
+  simulateInputAovs(inputValues, containerSize);
+  for (size_t n = 0; n < float_v::size(); n++) {
+    inputValues[(containerSize - 1)].vX[n] = 1.0f;
+    inputValues[(containerSize - 1)].vY[n] = 1.0f;
   }
-
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculation of all the input values
-    for (n = 0; n < containerSize; n++) {
-      std::tie(outputValues[n].radius, outputValues[n].phi) =
-          calculatePolarCoordinate(inputValues[n].x, inputValues[n].y);
+    for (size_t n = 0; n < containerSize; n++) {
+      std::tie(outputValues[n].vRadius, outputValues[n].vPhi) =
+          calculatePolarCoordinate(inputValues[n].vX, inputValues[n].vY);
     }
   }
 
