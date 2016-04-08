@@ -25,20 +25,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef ADDITINAL_CALCULATIONS_H
 #define ADDITINAL_CALCULATIONS_H
 
-using Vc::float_v;
-
 //! For measuring the time of the polarcoordinate calculation
+template<typename T>
 void baseline(benchmark::State &state) {
   //! The size of the container
-  size_t containerSize = numberOfChunks(state.range_x(), float_v::size());
+  size_t containerSize = numberOfChunks(state.range_x(), T::size());
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX(float_v::Random());
-  float_v vCoordinateY(float_v::Random());
+  T vCoordinateX(T::Random());
+  T vCoordinateY(T::Random());
 
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
 
   while (state.KeepRunning()) {
     for (size_t n = 0; n < containerSize; n++) {
@@ -62,13 +61,14 @@ void baseline(benchmark::State &state) {
 }
 
 //! Scalar
-void scalar(benchmark::State &state) {
+template<typename T>
+typename std::enable_if<std::is_fundamental<T>::value>::type scalar(benchmark::State &state) {
   //! The size of the input values
   const size_t inputSize = state.range_x();
 
   //! The input and output values for calculation
-  VectorCoordinate inputValues(inputSize);
-  VectorPolarCoordinate outputValues(inputSize);
+  VectorCoordinate<T> inputValues(inputSize);
+  VectorPolarCoordinate<T> outputValues(inputSize);
 
   //! Creation of input values
   simulateInputAos(inputValues, inputSize);
@@ -85,7 +85,7 @@ void scalar(benchmark::State &state) {
 
   //! Tell the benchmark how many values are calculates
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(T));
 
 #ifdef USE_LOG
   std::clog << "Finnished: Scaler\n";

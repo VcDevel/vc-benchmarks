@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 //#define USE_LOG
 
 //#define BENCHMARKING_DATA_LAYOUT
-#define BENCHMARKING_ADDITION
+//#define BENCHMARKING_ADDITION
 
 #include "benchmarkhelper.h"
 #include "mathfunctions.h"
@@ -160,8 +160,29 @@ BENCHMARK(baseline)->Apply(applyFunction)->UseRealTime();
 #endif // BENCHMARKING_DATA_LAYOUT
 
 #ifdef BENCHMARKING_ADDITION
-Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, Vc_ALL_VECTORS);
+Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, (Vc_ALL_VECTORS));
 #endif // BENCHMARKING_ADDITION
+
+BENCHMARK_TEMPLATE(aosWithPadding, Vc::double_v, ->Apply(applyFunction));
+BENCHMARK_TEMPLATE(aosWithInterleavedPadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(aosWithGatherScatterPadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(aosWithGatherScatterUsingFunctionPadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(aosRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(aosInterleavedRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(aosWithGatherScatterRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(aosWithGatherScatterAsFunctionRestScalar, Vc::double_v)->Apply(applyFunction);
+
+BENCHMARK_TEMPLATE(aovs, Vc::double_v)->Apply(applyFunction);
+
+BENCHMARK_TEMPLATE(soaWithPadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithLoadStorePadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithGatherScatterPadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithGatherScatterAsFunctionPadding, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithLoadStoreRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithGatherScatterRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithGatherScatterFunctionRestScalar, Vc::double_v)->Apply(applyFunction);
+
 
 BENCHMARK_MAIN();
 #endif // USE_GOOGLE

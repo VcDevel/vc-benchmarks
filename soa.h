@@ -27,13 +27,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <vector>
 #include <Vc/vector>
 
-using Vc::int_v;
-
-typedef std::vector<float, Vc::Allocator<float>> VectorFloat;
-typedef Vc::vector<float, Vc::Allocator<float>> VcVectorFloat;
-
 //! The type of the indices for gather and scatter
-typedef float_v::IndexType IT;
+//typedef float_v::IndexType IT;
 
 //! Stores all coordinates with an array
 template <typename T> struct ArrayOfCoordinates {
@@ -47,19 +42,37 @@ template <typename T> struct ArrayOfPolarCoordinates {
   T phi;
 };
 
-typedef ArrayOfCoordinates<VectorFloat> StdArrayOfCoordinates;
-typedef ArrayOfCoordinates<VcVectorFloat> VcArrayOfCoordinates;
+template<typename T>
+using StdArrayOfCoordinates = ArrayOfCoordinates<std::vector<T, Vc::Allocator<T>>>;
+template<typename T>
+using VcArrayOfCoordinates = ArrayOfCoordinates<Vc::vector<T, Vc::Allocator<T>>>;
 
-typedef ArrayOfPolarCoordinates<VectorFloat> StdArrayOfPolarCoordinates;
-typedef ArrayOfPolarCoordinates<VcVectorFloat> VcArrayOfPolarCoordinates;
+template<typename T>
+using StdArrayOfPolarCoordinates = ArrayOfPolarCoordinates<std::vector<T, Vc::Allocator<T>>>;
+template<typename T>
+using VcArrayOfPolarCoordinates = ArrayOfPolarCoordinates<Vc::vector<T, Vc::Allocator<T>>>;
 
 //! Creates random numbers for SoA
-template <typename T>
-void simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
+template <typename B, typename T>
+typename std::enable_if<std::is_floating_point<B>::value>::type simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
   //! Creates the random numbers
   std::mt19937 engine(std::random_device{}());
   //! Adjust the random number to a range
-  std::uniform_real_distribution<float> random(-1.0f, 1.0f);
+  std::uniform_real_distribution<B> random(-1.0f, 1.0f);
+
+  for (size_t n = 0; n < size; n++) {
+    input.x[n] = random(engine);
+    input.y[n] = random(engine);
+  }
+}
+
+//! Creates random numbers for SoA
+template <typename B, typename T>
+typename std::enable_if<std::is_integral<B>::value>::type simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
+  //! Creates the random numbers
+  std::mt19937 engine(std::random_device{}());
+  //! Adjust the random number to a range
+  std::uniform_int_distribution<B> random(std::numeric_limits<B>::min(), std::numeric_limits<B>::max());
 
   for (size_t n = 0; n < size; n++) {
     input.x[n] = random(engine);
@@ -68,23 +81,24 @@ void simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
 }
 
 //! SoA with a padding
+template<typename T>
 void soaWithPadding(benchmark::State &state) {
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
   const size_t containerSize =
-      (numberOfChunks(inputSize, float_v::size()) * float_v::size());
+      (numberOfChunks(inputSize, T::size()) * T::size());
 
   //! The input and output values for calculation
-  StdArrayOfCoordinates inputValues;
-  StdArrayOfPolarCoordinates outputValues;
+  StdArrayOfCoordinates<typename T::value_type> inputValues;
+  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
 
   //! Change container size
   inputValues.x.reserve(containerSize);
@@ -95,19 +109,19 @@ void soaWithPadding(benchmark::State &state) {
 
   //! Creation of input values
   //! The values of the last container are set to 1.0f for the padding
-  for (size_t n = 1; n <= float_v::size(); n++) {
+  for (size_t n = 1; n <= T::size(); n++) {
     inputValues.x[(containerSize - n)] = 1.0f;
     inputValues.y[(containerSize - n)] = 1.0f;
   }
 
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculation of all and the additional input values
-    for (size_t n = 0; n < containerSize; n += float_v::size()) {
+    for (size_t n = 0; n < containerSize; n += T::size()) {
       //! Loads the values to vc-vector
-      for (size_t m = 0; m < float_v::size(); m++) {
+      for (size_t m = 0; m < T::size(); m++) {
         vCoordinateX[m] = inputValues.x[(n + m)];
         vCoordinateY[m] = inputValues.y[(n + m)];
       }
@@ -116,7 +130,7 @@ void soaWithPadding(benchmark::State &state) {
       std::tie(vRadius, vPhi) = calculatePolarCoordinate(vCoordinateX, vCoordinateY);
 
       //! Store the values from the vc-vector
-      for (size_t m = 0; m < float_v::size(); m++) {
+      for (size_t m = 0; m < T::size(); m++) {
         outputValues.radius[(n + m)] = vRadius[m];
         outputValues.phi[(n + m)] = vPhi[m];
       }
@@ -125,7 +139,7 @@ void soaWithPadding(benchmark::State &state) {
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_Padding\n";
@@ -133,23 +147,24 @@ void soaWithPadding(benchmark::State &state) {
 }
 
 //! SoA using load and store, with a padding
+template<typename T>
 void soaWithLoadStorePadding(benchmark::State &state) {
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
   const size_t containerSize =
-      (numberOfChunks(inputSize, float_v::size()) * float_v::size());
+      (numberOfChunks(inputSize, T::size()) * T::size());
 
   //! The input and output values for calculation
-  StdArrayOfCoordinates inputValues;
-  StdArrayOfPolarCoordinates outputValues;
+  StdArrayOfCoordinates<typename T::value_type> inputValues;
+  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
 
   //! Change container size
   inputValues.x.reserve(containerSize);
@@ -160,17 +175,17 @@ void soaWithLoadStorePadding(benchmark::State &state) {
 
   //! Creation of input values
   //! The values of the last container are set to 1.0f for the padding
-  for (size_t n = 1; n <= float_v::size(); n++) {
+  for (size_t n = 1; n <= T::size(); n++) {
     inputValues.x[(containerSize - n)] = 1.0f;
     inputValues.y[(containerSize - n)] = 1.0f;
   }
 
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculation of all and the additional input values
-    for (size_t n = 0; n < containerSize; n += float_v::size()) {
+    for (size_t n = 0; n < containerSize; n += T::size()) {
       //! Loads the values to vc-vector
       vCoordinateX.load((inputValues.x.data() + n));
       vCoordinateY.load((inputValues.y.data() + n));
@@ -186,7 +201,7 @@ void soaWithLoadStorePadding(benchmark::State &state) {
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_LoadStore_Padding\n";
@@ -194,23 +209,26 @@ void soaWithLoadStorePadding(benchmark::State &state) {
 }
 
 //! SoA using gather and scatter as operator, with a padding
+template<typename T>
 void soaWithGatherScatterPadding(benchmark::State &state) {
+typedef typename T::IndexType IT;
+
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
   const size_t containerSize =
-      (numberOfChunks(inputSize, float_v::size()) * float_v::size());
+      (numberOfChunks(inputSize, T::size()) * T::size());
 
   //! The input and output values for calculation
-  VcArrayOfCoordinates inputValues;
-  VcArrayOfPolarCoordinates outputValues;
+  VcArrayOfCoordinates<typename T::value_type> inputValues;
+  VcArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
   //! The indexes for gather and scatter
   IT indexes(IT::IndexesFromZero());
 
@@ -223,18 +241,18 @@ void soaWithGatherScatterPadding(benchmark::State &state) {
 
   //! Creation of input values
   //! The values of the last container are set to 1.0f for the padding
-  for (size_t n = 1; n <= float_v::size(); n++) {
+  for (size_t n = 1; n <= T::size(); n++) {
     inputValues.x[(containerSize - n)] = 1.0f;
     inputValues.y[(containerSize - n)] = 1.0f;
   }
 
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculation of all and the additional input values
     indexes = IT::IndexesFromZero();
-    for (size_t n = 0; n < containerSize; n += float_v::size()) {
+    for (size_t n = 0; n < containerSize; n += T::size()) {
       //! Loads the values to vc-vector
       vCoordinateX = inputValues.x[indexes];
       vCoordinateY = inputValues.y[indexes];
@@ -245,13 +263,13 @@ void soaWithGatherScatterPadding(benchmark::State &state) {
       //! Store the values from the vc-vector
       outputValues.radius[indexes] = vRadius;
       outputValues.phi[indexes] = vPhi;
-      indexes += float_v::size();
+      indexes += T::size();
     }
   }
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_GatherScatter[]_Padding\n";
@@ -259,23 +277,26 @@ void soaWithGatherScatterPadding(benchmark::State &state) {
 }
 
 //! SoA using gather and scatter as function, with a padding
+template<typename T>
 void soaWithGatherScatterAsFunctionPadding(benchmark::State &state) {
+typedef typename T::IndexType IT;
+
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the container
   const size_t containerSize =
-      (numberOfChunks(inputSize, float_v::size()) * float_v::size());
+      (numberOfChunks(inputSize, T::size()) * T::size());
 
   //! The input and output values for calculation
-  StdArrayOfCoordinates inputValues;
-  StdArrayOfPolarCoordinates outputValues;
+  StdArrayOfCoordinates<typename T::value_type> inputValues;
+  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
   //! The indexes for gather and scatter
   IT indexes(IT::IndexesFromZero());
 
@@ -288,18 +309,18 @@ void soaWithGatherScatterAsFunctionPadding(benchmark::State &state) {
 
   //! Creation of input values
   //! The values of the last container are set to 1.0f for the padding
-  for (size_t n = 1; n <= float_v::size(); n++) {
+  for (size_t n = 1; n <= T::size(); n++) {
     inputValues.x[(containerSize - n)] = 1.0f;
     inputValues.y[(containerSize - n)] = 1.0f;
   }
 
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     indexes = IT::IndexesFromZero();
     //! Calculation of all input values including the additional input values
-    for (size_t n = 0; n < containerSize; n += float_v::size()) {
+    for (size_t n = 0; n < containerSize; n += T::size()) {
       //! Loads the values to vc-vector
       vCoordinateX.gather(inputValues.x.data(), indexes);
       vCoordinateY.gather(inputValues.y.data(), indexes);
@@ -310,13 +331,13 @@ void soaWithGatherScatterAsFunctionPadding(benchmark::State &state) {
       //! Store the values from the vc-vector
       vRadius.scatter(outputValues.radius.data(), indexes);
       vPhi.scatter(outputValues.phi.data(), indexes);
-      indexes += float_v::size();
+      indexes += T::size();
     }
   }
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_GatherScatter()_Padding\n";
@@ -324,22 +345,23 @@ void soaWithGatherScatterAsFunctionPadding(benchmark::State &state) {
 }
 
 //! SoA with rest scalar
+template<typename T>
 void soaWithRestScalar(benchmark::State &state) {
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
-  const size_t missingSize = (inputSize % float_v::size());
+  const size_t missingSize = (inputSize % T::size());
 
   //! The input and output values for calculation
-  StdArrayOfCoordinates inputValues;
-  StdArrayOfPolarCoordinates outputValues;
+  StdArrayOfCoordinates<typename T::value_type> inputValues;
+  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
 
   //! Change container size
   inputValues.x.reserve(inputSize);
@@ -349,14 +371,14 @@ void soaWithRestScalar(benchmark::State &state) {
   outputValues.phi.reserve(inputSize);
 
   //! Creation of input values
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculation of the input values without the additional ones
-    for (size_t n = 0; n < (inputSize - missingSize); n += float_v::size()) {
+    for (size_t n = 0; n < (inputSize - missingSize); n += T::size()) {
       //! Loads the values to vc-vector
-      for (size_t m = 0; m < float_v::size(); m++) {
+      for (size_t m = 0; m < T::size(); m++) {
         vCoordinateX[m] = inputValues.x[(n + m)];
         vCoordinateY[m] = inputValues.y[(n + m)];
       }
@@ -365,7 +387,7 @@ void soaWithRestScalar(benchmark::State &state) {
       std::tie(vRadius, vPhi) = calculatePolarCoordinate(vCoordinateX, vCoordinateY);
 
       //! Store the values from the vc-vector
-      for (size_t m = 0; m < float_v::size(); m++) {
+      for (size_t m = 0; m < T::size(); m++) {
         outputValues.radius[(n + m)] = vRadius[m];
         outputValues.phi[(n + m)] = vPhi[m];
       }
@@ -381,7 +403,7 @@ void soaWithRestScalar(benchmark::State &state) {
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_RestScalar\n";
@@ -389,22 +411,23 @@ void soaWithRestScalar(benchmark::State &state) {
 }
 
 //! SoA using load and Store, with rest scalar
+template<typename T>
 void soaWithLoadStoreRestScalar(benchmark::State &state) {
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
-  const size_t missingSize = (inputSize % float_v::size());
+  const size_t missingSize = (inputSize % T::size());
 
   //! The input and output values for calculation
-  StdArrayOfCoordinates inputValues;
-  StdArrayOfPolarCoordinates outputValues;
+  StdArrayOfCoordinates<typename T::value_type> inputValues;
+  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
 
   //! Change container size
   inputValues.x.reserve(inputSize);
@@ -414,12 +437,12 @@ void soaWithLoadStoreRestScalar(benchmark::State &state) {
   outputValues.phi.reserve(inputSize);
 
   //! Creation of input values
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     //! Calculation of the input values without the additional ones
-    for (size_t n = 0; n < (inputSize - missingSize); n += float_v::size()) {
+    for (size_t n = 0; n < (inputSize - missingSize); n += T::size()) {
       //! Loads the values to vc-vector
       vCoordinateX.load((inputValues.x.data() + n));
       vCoordinateY.load((inputValues.y.data() + n));
@@ -442,7 +465,7 @@ void soaWithLoadStoreRestScalar(benchmark::State &state) {
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_LoadStore_RestScalar\n";
@@ -450,22 +473,25 @@ void soaWithLoadStoreRestScalar(benchmark::State &state) {
 }
 
 //! SoA using gather and scatter as operator, with rest scalar
+template<typename T>
 void soaWithGatherScatterRestScalar(benchmark::State &state) {
+typedef typename T::IndexType IT;
+
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
-  const size_t missingSize = (inputSize % float_v::size());
+  const size_t missingSize = (inputSize % T::size());
 
   //! The input and output values for calculation
-  StdArrayOfCoordinates inputValues;
-  StdArrayOfPolarCoordinates outputValues;
+  StdArrayOfCoordinates<typename T::value_type> inputValues;
+  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
   //! The indexes for gather and scatter
   IT indexes(IT::IndexesFromZero());
 
@@ -477,13 +503,13 @@ void soaWithGatherScatterRestScalar(benchmark::State &state) {
   outputValues.phi.reserve(inputSize);
 
   //! Creation of input values
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     indexes = IT::IndexesFromZero();
     //! Calculation of the input values without the additional ones
-    for (size_t n = 0; n < (inputSize - missingSize); n += float_v::size()) {
+    for (size_t n = 0; n < (inputSize - missingSize); n += T::size()) {
       //! Loads the values to vc-vector
       vCoordinateX.gather(inputValues.x.data(), indexes);
       vCoordinateY.gather(inputValues.y.data(), indexes);
@@ -494,7 +520,7 @@ void soaWithGatherScatterRestScalar(benchmark::State &state) {
       //! Store the values from the vc-vector
       vRadius.scatter(outputValues.radius.data(), indexes);
       vPhi.scatter(outputValues.phi.data(), indexes);
-      indexes += float_v::size();
+      indexes += T::size();
     }
 
     //! Calculation of the input values without the additional ones
@@ -507,7 +533,7 @@ void soaWithGatherScatterRestScalar(benchmark::State &state) {
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_GatherScatter[]_RestScalar\n";
@@ -515,22 +541,25 @@ void soaWithGatherScatterRestScalar(benchmark::State &state) {
 }
 
 //! SoA using gather and scatter as function, with rest scalar
+template<typename T>
 void soaWithGatherScatterFunctionRestScalar(benchmark::State &state) {
+typedef typename T::IndexType IT;
+
   //! The size of the values to process
   const size_t inputSize = state.range_x();
   //! The size of the values without a full vc-vector
-  const size_t missingSize = (inputSize % float_v::size());
+  const size_t missingSize = (inputSize % T::size());
 
   //! The input and output values for calculation
-  VcArrayOfCoordinates inputValues;
-  VcArrayOfPolarCoordinates outputValues;
+  VcArrayOfCoordinates<typename T::value_type> inputValues;
+  VcArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   //! Keeps the input values in a vc-vector
-  float_v vCoordinateX;
-  float_v vCoordinateY;
+  T vCoordinateX;
+  T vCoordinateY;
   //! Keeps the output values in a vc-vector
-  float_v vRadius;
-  float_v vPhi;
+  T vRadius;
+  T vPhi;
   //! The indexes for gather and scatter
   IT indexes(IT::IndexesFromZero());
 
@@ -542,13 +571,13 @@ void soaWithGatherScatterFunctionRestScalar(benchmark::State &state) {
   outputValues.phi.reserve(inputSize);
 
   //! Creation of input values
-  simulateInputSoa(inputValues, inputSize);
+  simulateInputSoa<typename T::value_type>(inputValues, inputSize);
   //! Creation of input values completed
 
   while (state.KeepRunning()) {
     indexes = IT::IndexesFromZero();
     //! Calculation of the input values without the additional ones
-    for (size_t n = 0; n < (inputSize - missingSize); n += float_v::size()) {
+    for (size_t n = 0; n < (inputSize - missingSize); n += T::size()) {
       //! Loads the values to vc-vector
       vCoordinateX.gather(inputValues.x.data(), indexes);
       vCoordinateY.gather(inputValues.y.data(), indexes);
@@ -559,7 +588,7 @@ void soaWithGatherScatterFunctionRestScalar(benchmark::State &state) {
       //! Store the values from the vc-vector
       vRadius.scatter(outputValues.radius.data(), indexes);
       vPhi.scatter(outputValues.phi.data(), indexes);
-      indexes += float_v::size();
+      indexes += T::size();
     }
 
     //! Calculate the leftover values scalar
@@ -572,7 +601,7 @@ void soaWithGatherScatterFunctionRestScalar(benchmark::State &state) {
 
   //! Tell the Benchmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 
 #ifdef USE_LOG
   std::clog << "Finnished: SoA_GatherScatter()_RestScalar\n";
