@@ -1,5 +1,4 @@
 /*Copyright © 2016 Björn Gaier
-All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <Vc/Vc>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 inline void escape(void *p) { asm volatile("" : : "g"(p) : "memory"); }
 
@@ -74,31 +74,139 @@ fakeRegisterRead(T &readedValue) {
   asm volatile("" ::"r"(readedValue));
 }
 
+typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark*>> UniqueBenchmarkPointer;
+struct TemplateWrapper {
+
+    UniqueBenchmarkPointer benchmarks{new std::vector<::benchmark::internal::Benchmark*>()};
+
+    void append(::benchmark::internal::Benchmark *ptr) {
+        benchmarks->push_back(ptr);
+    }
+
+    TemplateWrapper* operator->() {
+        return this;
+    }
+
+    TemplateWrapper& Arg(int x) {
+        for(auto &p : *benchmarks) {
+            p->Arg(x);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& Range(int start, int limit) {
+        for(auto &p : *benchmarks) {
+            p->Range(start, limit);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& DenseRange(int start, int limit) {
+        for(auto &p : *benchmarks) {
+            p->DenseRange(start, limit);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& ArgPair(int x, int y) {
+        for(auto &p : *benchmarks) {
+            p->ArgPair(x, y);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& RangePair(int lo1, int hi1, int lo2, int hi2) {
+        for(auto &p : *benchmarks) {
+            p->RangePair(lo1, hi1, lo2, hi2);
+        }
+
+        return *this;
+    }
+
+    template<typename ... Ts>
+    TemplateWrapper& Apply(Ts &&... args) {
+        for(auto &p : *benchmarks) {
+            p->Apply(args...);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& MinTime(double t) {
+        for(auto &p : *benchmarks) {
+            p->MinTime(t);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& UseRealTime() {
+        for(auto &p : *benchmarks) {
+            p->UseRealTime();
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& Threads(int t) {
+        for(auto &p : *benchmarks) {
+            p->Threads(t);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& ThreadRange(int min_threads, int max_threads) {
+        for(auto &p : *benchmarks) {
+            p->ThreadRange(min_threads, max_threads);
+        }
+
+        return *this;
+    }
+
+    TemplateWrapper& ThreadPerCpu() {
+        for(auto &p : *benchmarks) {
+            p->ThreadPerCpu();
+        }
+
+        return *this;
+    }
+
+    operator int() {
+        return 0;
+    }
+};
+
 #define Vc_BENCHMARK_TEMPLATE_PLANSCHI(n_, ...)                                          \
-  template <unsigned int N> int BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)() { \
+  template <unsigned int N> TemplateWrapper BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)() { \
     std::string name(#n_);                                                               \
     name.append("<");                                                                    \
     name.append(typeToString<__VA_ARGS__::at<N>>());                                     \
-    name.append(">");                                                                    \
-    BENCHMARK_PRIVATE_DECLARE(n_) = (::benchmark::internal::RegisterBenchmarkInternal(   \
+    name.append(">");         \
+    TemplateWrapper wrapper = std::move(BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<N - 1>());   \
+    wrapper->append(::benchmark::internal::RegisterBenchmarkInternal(   \
         new ::benchmark::internal::FunctionBenchmark(name.c_str(),                       \
-                                                     n_<__VA_ARGS__::at<N>>)));          \
-                                                                                         \
-    BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<N - 1>();                       \
-    return 0;                                                                            \
+                                                     n_<__VA_ARGS__::at<N>>))); \
+    return wrapper;\
   }                                                                                      \
                                                                                          \
-  template <> int BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<0u>() {           \
+  template <> TemplateWrapper BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<0u>() {           \
     std::string name(#n_);                                                               \
     name.append("<");                                                                    \
     name.append(typeToString<__VA_ARGS__::at<0>>());                                     \
     name.append(">");                                                                    \
-    BENCHMARK_PRIVATE_DECLARE(n_) = (::benchmark::internal::RegisterBenchmarkInternal(   \
+    TemplateWrapper wrapper;                       \
+                                                                                         \
+    wrapper.append(::benchmark::internal::RegisterBenchmarkInternal(                    \
         new ::benchmark::internal::FunctionBenchmark(name.c_str(),                       \
                                                      n_<__VA_ARGS__::at<0>>)));          \
-    return 0;                                                                            \
+    return wrapper;                                                                      \
   }                                                                                      \
-  int BENCHMARK_PRIVATE_CONCAT(variable, n_, __LINE__) =                                 \
+  int BENCHMARK_PRIVATE_CONCAT(variable, n_, __LINE__) =                     \
       BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<__VA_ARGS__::size() - 1>()
 
 #define Vc_SCALAR_VECTORS                                                                \
@@ -115,7 +223,7 @@ fakeRegisterRead(T &readedValue) {
 #ifdef Vc_IMPL_AVX
 #define Vc_AVX_VECTORS Typelist<Vc::AVX::double_v, Vc::AVX::float_v>
 #else
-#define AVX_VECTORS Typelist<>
+#define Vc_AVX_VECTORS Typelist<>
 #endif // Vc_IMPL_AVX
 
 #ifdef Vc_IMPL_MIC

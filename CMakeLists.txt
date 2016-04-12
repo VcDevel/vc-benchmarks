@@ -14,11 +14,6 @@ endif()
 
 add_executable(benchmark main.cpp)
 target_include_directories(benchmark PRIVATE "${Vc_INCLUDE_DIR};${GGBENCH_INCLUDE_DIR}")
-target_compile_options(benchmark PRIVATE "-std=c++11;-mno-ms-bitfields;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
+target_compile_options(benchmark PRIVATE "-std=c++11;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
 set_target_properties(benchmark PROPERTIES LINK_FLAGS -pthread)
 target_link_libraries(benchmark ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})
-
-#Google Benchmark requiers this library
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  target_link_libraries(benchmark Shlwapi)
-endif()

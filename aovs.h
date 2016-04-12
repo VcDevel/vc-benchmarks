@@ -1,5 +1,4 @@
 /*Copyright © 2016 Björn Gaier
-All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,14 +25,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #define AOVS_H
 #include <vector>
 
-//! Stores coordinates with vectorized variables
 template<typename T>
 struct VectorizedCoordinate {
   T vX;
   T vY;
 };
 
-//! Stores polarcoordinate with vectorized variables
 template<typename T>
 struct VectorizedPolarCoordinate {
   T vRadius;
@@ -45,12 +42,9 @@ using VectorVectorizedCoordinate = std::vector<VectorizedCoordinate<T>, Vc::Allo
 template<typename T>
 using VectorVectorizedPolarCoordinate = std::vector<VectorizedPolarCoordinate<T>, Vc::Allocator<VectorizedPolarCoordinate<T>>>;
 
-//! Creates random numbers for AovS
 template<typename T>
 void simulateInputAovs(VectorVectorizedCoordinate<T> &input, const size_t size) {
-  //! For iterating over the input
   typename VectorVectorizedCoordinate<T>::iterator aktElement = input.begin();
-  //! The end of the iteration
   typename VectorVectorizedCoordinate<T>::iterator endElement = (input.begin() + size);
 
   while (aktElement != endElement) {
@@ -64,25 +58,19 @@ void simulateInputAovs(VectorVectorizedCoordinate<T> &input, const size_t size) 
 //! AovS
 template<typename T>
 void aovs(benchmark::State &state) {
-  //! The size of the values to process
   const size_t inputSize = state.range_x();
-  //! The size of the container
   size_t containerSize = numberOfChunks(inputSize, T::size());
 
-  //! The input and output values for calculation
   VectorVectorizedCoordinate<T> inputValues(containerSize);
   VectorVectorizedPolarCoordinate<T> outputValues(containerSize);
 
-  //! Creation of input values
   simulateInputAovs(inputValues, containerSize);
   for (size_t n = 0; n < T::size(); n++) {
     inputValues[(containerSize - 1)].vX[n] = 1.0f;
     inputValues[(containerSize - 1)].vY[n] = 1.0f;
   }
-  //! Creation of input values completed
 
   while (state.KeepRunning()) {
-    //! Calculation of all the input values
     for (size_t n = 0; n < containerSize; n++) {
       std::tie(outputValues[n].vRadius, outputValues[n].vPhi) =
           calculatePolarCoordinate(inputValues[n].vX, inputValues[n].vY);

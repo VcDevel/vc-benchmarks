@@ -1,5 +1,4 @@
 /*Copyright © 2016 Björn Gaier
-All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -22,8 +21,7 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
-#define USE_GOOGLE
-//#define USE_LOG
+#define USE_LOG
 
 //#define BENCHMARKING_DATA_LAYOUT
 //#define BENCHMARKING_ADDITION
@@ -39,15 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "additinalcalculations.h"
 #include <Vc/cpuid.h>
 
-#ifndef USE_GOOGLE
-//! Is only used for testing
-int main() {
-  std::cout < <
-
-      < < "\n";
-  return 0;
-}
-#else
 using Vc::CpuId;
 
 //! Tests the L1-Cache sizes dynamicly
@@ -163,7 +152,20 @@ BENCHMARK(baseline)->Apply(applyFunction)->UseRealTime();
 Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, (Vc_ALL_VECTORS));
 #endif // BENCHMARKING_ADDITION
 
-BENCHMARK_TEMPLATE(aosWithPadding, Vc::double_v, ->Apply(applyFunction));
+//Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, Vc_AVX_VECTORS)->Range(1, 12345)->DenseRange(1, 5)->ArgPair(0, 23)->RangePair(0, 2, 0, 4)->MinTime(2.0)->UseRealTime()->Threads(2);
+
+//OUTER_PRODUCT WIRD HELFEN :3
+//Vc_BENCHMARK_TEMPLATE_PLANSCHI(aosNormalWith, Vc_AVX_VECTORS, PaddingPolicyPadding);
+
+/*BENCHMARK_TEMPLATE(aosWithPadding, float_v)->Arg(1234);
+BENCHMARK_TEMPLATE(aosWithInterleavedPadding, float_v)->Arg(1234);
+BENCHMARK_TEMPLATE(aosWithGatherScatterPadding, float_v)->Arg(1234);*/
+
+BENCHMARK_TEMPLATE(aosWithRestScalar, float_v)->Arg(1234);
+BENCHMARK_TEMPLATE(aosWithInterleavedRestScalar, float_v)->Arg(1234);
+BENCHMARK_TEMPLATE(aosWithGatherScatterRestScalar, float_v)->Arg(1234);
+
+/*BENCHMARK_TEMPLATE(aosWithPadding, Vc::double_v, ->Apply(applyFunction));
 BENCHMARK_TEMPLATE(aosWithInterleavedPadding, Vc::double_v)->Apply(applyFunction);
 BENCHMARK_TEMPLATE(aosWithGatherScatterPadding, Vc::double_v)->Apply(applyFunction);
 BENCHMARK_TEMPLATE(aosWithGatherScatterUsingFunctionPadding, Vc::double_v)->Apply(applyFunction);
@@ -181,8 +183,7 @@ BENCHMARK_TEMPLATE(soaWithGatherScatterAsFunctionPadding, Vc::double_v)->Apply(a
 BENCHMARK_TEMPLATE(soaWithRestScalar, Vc::double_v)->Apply(applyFunction);
 BENCHMARK_TEMPLATE(soaWithLoadStoreRestScalar, Vc::double_v)->Apply(applyFunction);
 BENCHMARK_TEMPLATE(soaWithGatherScatterRestScalar, Vc::double_v)->Apply(applyFunction);
-BENCHMARK_TEMPLATE(soaWithGatherScatterFunctionRestScalar, Vc::double_v)->Apply(applyFunction);
+BENCHMARK_TEMPLATE(soaWithGatherScatterFunctionRestScalar, Vc::double_v)->Apply(applyFunction);*/
 
 
 BENCHMARK_MAIN();
-#endif // USE_GOOGLE

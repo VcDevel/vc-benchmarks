@@ -1,5 +1,4 @@
 /*Copyright © 2016 Björn Gaier
-All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,30 +27,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 //! For measuring the time of the polarcoordinate calculation
 template<typename T>
 void baseline(benchmark::State &state) {
-  //! The size of the container
   size_t containerSize = numberOfChunks(state.range_x(), T::size());
 
-  //! Keeps the input values in a vc-vector
   T vCoordinateX(T::Random());
   T vCoordinateY(T::Random());
 
-  //! Keeps the output values in a vc-vector
   T vRadius;
   T vPhi;
 
   while (state.KeepRunning()) {
     for (size_t n = 0; n < containerSize; n++) {
-      //! Prevent the optimizer from optimizing
+
       fakeMemoryModification(vCoordinateX);
       fakeMemoryModification(vCoordinateY);
-      //! Calculates only one value
+
       std::tie(vRadius, vPhi) = calculatePolarCoordinate(vCoordinateX, vCoordinateY);
+
       fakeRegisterRead(vRadius);
       fakeRegisterRead(vPhi);
     }
   }
 
-  //! Tell the benchnmark how many values are calculated
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(float));
 
@@ -63,27 +59,21 @@ void baseline(benchmark::State &state) {
 //! Scalar
 template<typename T>
 typename std::enable_if<std::is_fundamental<T>::value>::type scalar(benchmark::State &state) {
-  //! The size of the input values
   const size_t inputSize = state.range_x();
 
-  //! The input and output values for calculation
   VectorCoordinate<T> inputValues(inputSize);
   VectorPolarCoordinate<T> outputValues(inputSize);
 
-  //! Creation of input values
   simulateInputAos(inputValues, inputSize);
-  //! Creation of input values completed
 
   while (state.KeepRunning()) {
-    //! Calculate alle values
     for (size_t n = 0; n < inputSize; n++) {
-      //! Scalar Calculation
+
       std::tie(outputValues[n].radius, outputValues[n].phi) =
           calculatePolarCoordinate(inputValues[n].x, inputValues[n].y);
     }
   }
 
-  //! Tell the benchmark how many values are calculates
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(T));
 
