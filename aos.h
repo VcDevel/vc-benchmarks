@@ -30,18 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 using Vc::Common::InterleavedMemoryWrapper;
 
 template<typename T>
-struct Coordinate {
-  T x;
-  T y;
-};
-
-template<typename T>
-struct PolarCoordinate {
-  T radius;
-  T phi;
-};
-
-template<typename T>
 using VectorCoordinate = Vc::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
 template<typename T>
 using VectorPolarCoordinate = Vc::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
@@ -141,6 +129,172 @@ using InterleavedPolicyRestScalar = InterleavedPolicy<T, true>;
 template<typename T>
 using GatherScatterPolicyRestScalar = GatherScatterPolicy<T, true>;
 
+//-----------------------------------------------------------------------------------------------------------
+
+template<typename T>
+struct AosLayout {
+    using IC = VectorCoordinate<typename T::value_type>;
+    using OC = VectorPolarCoordinate<typename T::value_type>;
+
+    IC inputValues;
+    OC outputValues;
+
+    AosLayout(size_t containerSize) : inputValues(containerSize), outputValues(containerSize){
+        simulateInputAos<typename T::value_type>(inputValues, inputValues.size());
+    }
+
+    Coordinate<typename T::value_type> coordinate(size_t index) {
+        Coordinate<typename T::value_type> r;
+
+        r.x = inputValues[index].x;
+        r.y = inputValues[index].y;
+
+        return r;
+    }
+
+    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
+        outputValues[index].radius = coord.radius;
+        outputValues[index].phi    = coord.phi;
+    }
+};
+
+template<typename T>
+struct AosSubscriptAccessImpl : public AosLayout<T> {
+
+    AosSubscriptAccessImpl(size_t containerSize) : AosLayout<T>(containerSize) {
+    }
+
+    void setupLoop() {
+    }
+
+    Coordinate<T> load(size_t index) {
+        Coordinate<T> r;
+
+        for (size_t m = 0; m < T::size(); m++) {
+          r.x[m] = AosLayout<T>::inputValues[(index + m)].x;
+          r.y[m] = AosLayout<T>::inputValues[(index + m)].y;
+        }
+
+        return r;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+      for (size_t m = 0; m < T::size(); m++) {
+        AosLayout<T>::outputValues[(index + m)].radius = coord.radius[m];
+        AosLayout<T>::outputValues[(index + m)].phi = coord.phi[m];
+      }
+    }
+};
+
+template<typename T>
+struct InterleavedAccessImpl : public AosLayout<T> {
+    using IW = InterleavedMemoryWrapper<Coordinate<typename T::value_type>, T>;
+    using OW = InterleavedMemoryWrapper<PolarCoordinate<typename T::value_type>, T>;
+
+    IW inputWrapper;
+    OW outputWrapper;
+
+    InterleavedAccessImpl(size_t containerSize)
+    : AosLayout<T>(containerSize), inputWrapper(AosLayout<T>::inputValues.data()),
+      outputWrapper(AosLayout<T>::outputValues.data()) {
+    }
+
+    void setupLoop() {
+    }
+
+    Coordinate<T> load(size_t index) {
+        Coordinate<T> r;
+
+        Vc::tie(r.x, r.y) = inputWrapper[index];
+        return r;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+        outputWrapper[index] = Vc::tie(coord.radius, coord.phi);
+    }
+};
+
+template<typename T>
+struct AosGatherScatterAccessImpl : public AosLayout<T> {
+typedef typename T::IndexType IT;
+
+    IT indexes;
+
+    AosGatherScatterAccessImpl(size_t containerSize)
+        : AosLayout<T>(containerSize),
+        indexes(IT::IndexesFromZero()) {
+    }
+
+    void setupLoop() {
+        indexes = IT::IndexesFromZero();
+    }
+
+    Coordinate<T> load(size_t index) {
+        Coordinate<T> r;
+
+        r.x = AosLayout<T>::inputValues[indexes][&Coordinate<typename T::value_type>::x];
+        r.y = AosLayout<T>::inputValues[indexes][&Coordinate<typename T::value_type>::y];
+
+        return r;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+        AosLayout<T>::outputValues[indexes][&PolarCoordinate<typename T::value_type>::radius] = coord.radius;
+        AosLayout<T>::outputValues[indexes][&PolarCoordinate<typename T::value_type>::phi] = coord.phi;
+
+        indexes += T::size();
+    }
+};
+
+struct AosSubscriptAccess {
+    template<typename T> using type = AosSubscriptAccessImpl<T>;
+};
+
+struct InterleavedAccess {
+    template<typename T> using type = InterleavedAccessImpl<T>;
+};
+
+struct AosGatherScatterAccess {
+    template<typename T> using type = AosGatherScatterAccessImpl<T>;
+};
+
+struct RestScalar {};
+struct Padding {};
+
+template<typename T, typename PP, typename B>
+inline void veryMelone(benchmark::State &state) {
+  using P = typename PP::template type<T>;
+
+  const size_t inputSize = state.range_x();
+  const size_t missingSize = std::is_same<B, RestScalar>::value ? inputSize % T::size() : 0;
+  const size_t containerSize = std::is_same<B, RestScalar>::value ? inputSize - missingSize : numberOfChunks(inputSize, T::size()) * T::size();
+
+  P magic(containerSize + missingSize);
+
+  while (state.KeepRunning()) {
+      magic.setupLoop();
+
+    for (size_t n = 0; n < containerSize; n += T::size()) {
+      //! Loads the values to vc-vector
+      const auto coord = magic.load(n);
+
+      //! Calculate the polarcoordinates
+      const auto polarCoord = calculatePolarCoordinate(coord); //Ändern
+
+      //! Store the values from the vc-vector
+      magic.store(n, polarCoord);
+    }
+
+    for (size_t n = (inputSize - missingSize); n < inputSize; n++) {
+      magic.setPolarCoordinate(n,
+          calculatePolarCoordinate(magic.coordinate(n))); //Gibt Coordinate FLOAT
+    }
+  }
+
+  state.SetItemsProcessed(state.iterations() * state.range_x());
+  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
+}
+//-----------------------------------------------------------------------------------------------------------
 template<typename T, template<typename> class P, typename U, typename S, typename R>
 inline void aosWith(benchmark::State &state, U loopSetup,  S load, R store) {
   const size_t inputSize = state.range_x();

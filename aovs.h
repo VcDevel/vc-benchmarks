@@ -38,9 +38,9 @@ struct VectorizedPolarCoordinate {
 };
 
 template<typename T>
-using VectorVectorizedCoordinate = std::vector<VectorizedCoordinate<T>, Vc::Allocator<VectorizedCoordinate<T>>>;
+using VectorVectorizedCoordinate = std::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
 template<typename T>
-using VectorVectorizedPolarCoordinate = std::vector<VectorizedPolarCoordinate<T>, Vc::Allocator<VectorizedPolarCoordinate<T>>>;
+using VectorVectorizedPolarCoordinate = std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
 
 template<typename T>
 void simulateInputAovs(VectorVectorizedCoordinate<T> &input, const size_t size) {
@@ -48,12 +48,57 @@ void simulateInputAovs(VectorVectorizedCoordinate<T> &input, const size_t size) 
   typename VectorVectorizedCoordinate<T>::iterator endElement = (input.begin() + size);
 
   while (aktElement != endElement) {
-      aktElement->vX = T::Random();
-      aktElement->vY = T::Random();
+      aktElement->x = T::Random();
+      aktElement->y = T::Random();
 
       aktElement++;
   }
 }
+
+template<typename T>
+struct AovsLayout {
+    using IC = VectorVectorizedCoordinate<T>;
+    using OC = VectorVectorizedPolarCoordinate<T>;
+
+    IC inputValues;
+    OC outputValues;
+
+    AovsLayout(size_t containerSize)
+        : inputValues(containerSize/T::size()), outputValues(containerSize/T::size())
+    {
+        simulateInputAovs<T>(inputValues, inputValues.size());
+    }
+
+    Coordinate<typename T::value_type> coordinate(size_t index) {
+        Coordinate<typename T::value_type> r;
+        return r;
+    }
+
+    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
+    }
+};
+
+template<typename T>
+struct AovsAccessImpl : public AovsLayout<T> {
+
+    AovsAccessImpl(size_t containerSize) : AovsLayout<T>(containerSize) {
+    }
+
+    void setupLoop() {
+    }
+
+    Coordinate<T> load(size_t index) {
+        return AovsLayout<T>::inputValues[index];
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+        AovsLayout<T>::outputValues[index] = coord;
+    }
+};
+
+struct AovsAccess {
+    template<typename T> using type = AovsAccessImpl<T>;
+};
 
 //! AovS
 template<typename T>

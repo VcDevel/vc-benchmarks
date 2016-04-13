@@ -161,9 +161,25 @@ Vc_BENCHMARK_TEMPLATE_PLANSCHI(additionVectorVector, (Vc_ALL_VECTORS));
 BENCHMARK_TEMPLATE(aosWithInterleavedPadding, float_v)->Arg(1234);
 BENCHMARK_TEMPLATE(aosWithGatherScatterPadding, float_v)->Arg(1234);*/
 
-BENCHMARK_TEMPLATE(aosWithRestScalar, float_v)->Arg(1234);
+/*BENCHMARK_TEMPLATE(aosWithRestScalar, float_v)->Arg(1234);
 BENCHMARK_TEMPLATE(aosWithInterleavedRestScalar, float_v)->Arg(1234);
-BENCHMARK_TEMPLATE(aosWithGatherScatterRestScalar, float_v)->Arg(1234);
+BENCHMARK_TEMPLATE(aosWithGatherScatterRestScalar, float_v)->Arg(1234);*/
+
+BENCHMARK_TEMPLATE(veryMelone, float_v, AosSubscriptAccess, RestScalar)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, InterleavedAccess, RestScalar)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, AosGatherScatterAccess, RestScalar)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, AosSubscriptAccess, Padding)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, InterleavedAccess, Padding)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, AosGatherScatterAccess, Padding)->Arg(1234);
+
+BENCHMARK_TEMPLATE(veryMelone, float_v, AovsAccess, Padding)->Arg(1234);
+
+BENCHMARK_TEMPLATE(veryMelone, float_v, SoaSubscriptAccess, RestScalar)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, LoadStoreAccess, RestScalar)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, SoaGatherScatterAccess, RestScalar)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, SoaSubscriptAccess, Padding)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, LoadStoreAccess, Padding)->Arg(1234);
+BENCHMARK_TEMPLATE(veryMelone, float_v, SoaGatherScatterAccess, Padding)->Arg(1234);
 
 /*BENCHMARK_TEMPLATE(aosWithPadding, Vc::double_v, ->Apply(applyFunction));
 BENCHMARK_TEMPLATE(aosWithInterleavedPadding, Vc::double_v)->Apply(applyFunction);

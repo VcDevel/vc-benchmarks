@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <vector>
 #include <Vc/vector>
 
-template <typename T> struct ArrayOfCoordinates {
+/*template <typename T> struct ArrayOfCoordinates {
   T x;
   T y;
 };
@@ -34,17 +34,12 @@ template <typename T> struct ArrayOfCoordinates {
 template <typename T> struct ArrayOfPolarCoordinates {
   T radius;
   T phi;
-};
+};*/
 
 template<typename T>
-using StdArrayOfCoordinates = ArrayOfCoordinates<std::vector<T, Vc::Allocator<T>>>;
+using ArrayOfCoordinates = Coordinate<Vc::vector<T, Vc::Allocator<T>>>;
 template<typename T>
-using VcArrayOfCoordinates = ArrayOfCoordinates<Vc::vector<T, Vc::Allocator<T>>>;
-
-template<typename T>
-using StdArrayOfPolarCoordinates = ArrayOfPolarCoordinates<std::vector<T, Vc::Allocator<T>>>;
-template<typename T>
-using VcArrayOfPolarCoordinates = ArrayOfPolarCoordinates<Vc::vector<T, Vc::Allocator<T>>>;
+using ArrayOfPolarCoordinates = PolarCoordinate<Vc::vector<T, Vc::Allocator<T>>>;
 
 //! Creates random numbers for SoA
 template <typename B, typename T>
@@ -60,6 +55,132 @@ void simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
   }
 }
 
+template<typename T>
+struct SoaLayout {
+    using IC = ArrayOfCoordinates<typename T::value_type>;
+    using OC = ArrayOfPolarCoordinates<typename T::value_type>;
+
+    IC inputValues;
+    OC outputValues;
+
+    SoaLayout(size_t containerSize) {
+        inputValues.x.reserve(containerSize);
+        inputValues.y.reserve(containerSize);
+
+        outputValues.radius.reserve(containerSize);
+        outputValues.phi.reserve(containerSize);
+    }
+
+    Coordinate<typename T::value_type> coordinate(size_t index) {
+        Coordinate<typename T::value_type> r;
+
+        r.x = inputValues.x[index];
+        r.y = inputValues.y[index];
+
+        return r;
+    }
+
+    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
+        outputValues.radius[index] = coord.radius;
+        outputValues.phi[index]    = coord.phi;
+    }
+};
+
+template<typename T>
+struct SoaSubscriptAccessImpl : public SoaLayout<T> {
+    SoaSubscriptAccessImpl(size_t containerSize)
+    : SoaLayout<T>(containerSize) {
+    }
+
+    void setupLoop() {
+    }
+
+    Coordinate<T> load(size_t index) {
+        Coordinate<T> r;
+
+        for (size_t m = 0; m < T::size(); m++) {
+          r.x[m] = SoaLayout<T>::inputValues.x[(index + m)];
+          r.y[m] = SoaLayout<T>::inputValues.y[(index + m)];
+        }
+
+        return r;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+      for (size_t m = 0; m < T::size(); m++) {
+        SoaLayout<T>::outputValues.radius[(index + m)] = coord.radius[m];
+        SoaLayout<T>::outputValues.phi[(index + m)] = coord.phi[m];
+      }
+    }
+};
+
+template<typename T>
+struct LoadStoreAccessImpl : public SoaLayout<T> {
+    LoadStoreAccessImpl(size_t containerSize)
+    : SoaLayout<T>(containerSize) {
+    }
+
+    void setupLoop() {
+    }
+
+    Coordinate<T> load(size_t index) {
+        Coordinate<T> r;
+
+        r.x.load(SoaLayout<T>::inputValues.x.data() + index);
+        r.y.load(SoaLayout<T>::inputValues.y.data() + index);
+
+        return r;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+
+      coord.radius.store((SoaLayout<T>::outputValues.radius.data() + index));
+      coord.phi.store((SoaLayout<T>::outputValues.phi.data() + index));
+    }
+};
+
+template<typename T>
+struct SoaGatherScatterAccessImpl : public SoaLayout<T> {
+typedef typename T::IndexType IT;
+
+    IT indexes;
+
+    SoaGatherScatterAccessImpl(size_t containerSize)
+    : SoaLayout<T>(containerSize), indexes(IT::IndexesFromZero()) {
+    }
+
+    void setupLoop() {
+        indexes = IT::IndexesFromZero();
+    }
+
+    Coordinate<T> load(size_t index) {
+        Coordinate<T> r;
+
+        r.x = SoaLayout<T>::inputValues.x[indexes];
+        r.y = SoaLayout<T>::inputValues.y[indexes];
+
+        return r;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+          SoaLayout<T>::outputValues.radius[indexes] = coord.radius;
+          SoaLayout<T>::outputValues.phi[indexes] = coord.phi;
+          indexes += T::size();
+    }
+};
+
+struct SoaSubscriptAccess {
+    template<typename T> using type = SoaSubscriptAccessImpl<T>;
+};
+
+struct LoadStoreAccess {
+    template<typename T> using type = LoadStoreAccessImpl<T>;
+};
+
+struct SoaGatherScatterAccess {
+    template<typename T> using type = SoaGatherScatterAccessImpl<T>;
+};
+
 //! SoA with a padding
 template<typename T>
 void soaWithPadding(benchmark::State &state) {
@@ -67,8 +188,8 @@ void soaWithPadding(benchmark::State &state) {
   const size_t containerSize =
       (numberOfChunks(inputSize, T::size()) * T::size());
 
-  StdArrayOfCoordinates<typename T::value_type> inputValues;
-  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -120,8 +241,8 @@ void soaWithLoadStorePadding(benchmark::State &state) {
   const size_t containerSize =
       (numberOfChunks(inputSize, T::size()) * T::size());
 
-  StdArrayOfCoordinates<typename T::value_type> inputValues;
-  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -171,8 +292,8 @@ typedef typename T::IndexType IT;
   const size_t containerSize =
       (numberOfChunks(inputSize, T::size()) * T::size());
 
-  VcArrayOfCoordinates<typename T::value_type> inputValues;
-  VcArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -226,8 +347,8 @@ typedef typename T::IndexType IT;
   const size_t containerSize =
       (numberOfChunks(inputSize, T::size()) * T::size());
 
-  StdArrayOfCoordinates<typename T::value_type> inputValues;
-  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -278,8 +399,8 @@ void soaWithRestScalar(benchmark::State &state) {
   const size_t inputSize = state.range_x();
   const size_t missingSize = (inputSize % T::size());
 
-  StdArrayOfCoordinates<typename T::value_type> inputValues;
-  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -329,8 +450,8 @@ void soaWithLoadStoreRestScalar(benchmark::State &state) {
   const size_t inputSize = state.range_x();
   const size_t missingSize = (inputSize % T::size());
 
-  StdArrayOfCoordinates<typename T::value_type> inputValues;
-  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -378,8 +499,8 @@ typedef typename T::IndexType IT;
   const size_t inputSize = state.range_x();
   const size_t missingSize = (inputSize % T::size());
 
-  StdArrayOfCoordinates<typename T::value_type> inputValues;
-  StdArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
@@ -431,8 +552,8 @@ typedef typename T::IndexType IT;
   const size_t inputSize = state.range_x();
   const size_t missingSize = (inputSize % T::size());
 
-  VcArrayOfCoordinates<typename T::value_type> inputValues;
-  VcArrayOfPolarCoordinates<typename T::value_type> outputValues;
+  ArrayOfCoordinates<typename T::value_type> inputValues;
+  ArrayOfPolarCoordinates<typename T::value_type> outputValues;
 
   T vCoordinateX;
   T vCoordinateY;
