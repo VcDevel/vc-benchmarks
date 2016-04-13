@@ -88,46 +88,15 @@ struct AovsAccessImpl : public AovsLayout<T> {
     }
 
     Coordinate<T> load(size_t index) {
-        return AovsLayout<T>::inputValues[index];
+        return AovsLayout<T>::inputValues[index/T::size()];
     }
 
     void store(size_t index, const PolarCoordinate<T> &coord) {
-        AovsLayout<T>::outputValues[index] = coord;
+        AovsLayout<T>::outputValues[index/T::size()] = coord;
     }
 };
 
 struct AovsAccess {
     template<typename T> using type = AovsAccessImpl<T>;
 };
-
-//! AovS
-template<typename T>
-void aovs(benchmark::State &state) {
-  const size_t inputSize = state.range_x();
-  size_t containerSize = numberOfChunks(inputSize, T::size());
-
-  VectorVectorizedCoordinate<T> inputValues(containerSize);
-  VectorVectorizedPolarCoordinate<T> outputValues(containerSize);
-
-  simulateInputAovs(inputValues, containerSize);
-  for (size_t n = 0; n < T::size(); n++) {
-    inputValues[(containerSize - 1)].vX[n] = 1.0f;
-    inputValues[(containerSize - 1)].vY[n] = 1.0f;
-  }
-
-  while (state.KeepRunning()) {
-    for (size_t n = 0; n < containerSize; n++) {
-      std::tie(outputValues[n].vRadius, outputValues[n].vPhi) =
-          calculatePolarCoordinate(inputValues[n].vX, inputValues[n].vY);
-    }
-  }
-
-  //! Tell the Benchmark how many values are calculated
-  state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
-
-#ifdef USE_LOG
-  std::clog << "Finnished: AovS\n";
-#endif
-}
 #endif // AOVS_H

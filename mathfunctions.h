@@ -52,7 +52,7 @@ template<typename T>
 inline PolarCoordinate<T> calculatePolarCoordinate(const Coordinate<T> &coord) {
     PolarCoordinate<T> r;
 
-    r.radius = sqrt((coord.x * coord.x) + (coord.y));
+    r.radius = sqrt((coord.x * coord.x) + (coord.y * coord.y));
     r.phi    = atan2(coord.y, coord.x) * 57.295780181884765625f;
 
     return r;

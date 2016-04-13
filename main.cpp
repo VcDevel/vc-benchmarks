@@ -183,8 +183,8 @@ BENCHMARK_TEMPLATE(veryMelone, float_v, SoaGatherScatterAccess, Padding)->Arg(12
 
 Vc_BENCHMARK_TEMPLATE_PLANSCHI(veryMelonePlanschi,
     outer_product<Vc_AVX_VECTORS,
-                  concat< Typelist<Typelist<AovsAccess, Padding>>,
-                  outer_product<Typelist<AosSubscriptAccess, InterleavedAccess>,
+                  concat< outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,
+                  outer_product<Typelist<AosSubscriptAccess, InterleavedAccess, AosGatherScatterAccess, SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,
                   Typelist<Padding, RestScalar> > >>
 )->Arg(1234);
 

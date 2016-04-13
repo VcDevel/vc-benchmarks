@@ -24,40 +24,58 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef ADDITINAL_CALCULATIONS_H
 #define ADDITINAL_CALCULATIONS_H
 
-//! For measuring the time of the polarcoordinate calculation
 template<typename T>
-void baseline(benchmark::State &state) {
-  size_t containerSize = numberOfChunks(state.range_x(), T::size());
+struct BaselineLayout {
+    using IC = Coordinate<T>;
+    using OC = PolarCoordinate<T>;
 
-  T vCoordinateX(T::Random());
-  T vCoordinateY(T::Random());
+    IC inputValue;
+    OC outputValue;
 
-  T vRadius;
-  T vPhi;
-
-  while (state.KeepRunning()) {
-    for (size_t n = 0; n < containerSize; n++) {
-
-      fakeMemoryModification(vCoordinateX);
-      fakeMemoryModification(vCoordinateY);
-
-      std::tie(vRadius, vPhi) = calculatePolarCoordinate(vCoordinateX, vCoordinateY);
-
-      fakeRegisterRead(vRadius);
-      fakeRegisterRead(vPhi);
+    BaselineLayout(size_t containerSize) {
+        inputValue.x = T::Random();
+        inputValue.y = T::Random();
     }
-  }
 
-  state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(float));
+    Coordinate<typename T::value_type> coordinate(size_t index) {
+        Coordinate<typename T::value_type> r;
+        return r;
+    }
 
-#ifdef USE_LOG
-  std::clog << "Finnished: Baseline\n";
-#endif
-}
+    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
+    }
+};
+
+template<typename T>
+struct BaselineImpl : public BaselineLayout<T> {
+    BaselineImpl(size_t containerSize) : BaselineLayout<T>(containerSize) {
+    }
+
+    void setupLoop() {
+    }
+
+    Coordinate<T> load(size_t index) {
+         fakeMemoryModification(BaselineLayout<T>::inputValue.x);
+         fakeMemoryModification(BaselineLayout<T>::inputValue.y);
+
+         return BaselineLayout<T>::inputValue;
+    }
+
+    void store(size_t index, const PolarCoordinate<T> &coord) {
+         BaselineLayout<T>::outputValue = coord;
+
+         fakeRegisterRead(BaselineLayout<T>::outputValue.radius);
+         fakeRegisterRead(BaselineLayout<T>::outputValue.phi);
+    }
+};
+
+struct Baseline {
+    template<typename T> using type = BaselineImpl<T>;
+};
 
 //! Scalar
 template<typename T>
+[[deprecated("Use scalar vectors instead")]]
 typename std::enable_if<std::is_fundamental<T>::value>::type scalar(benchmark::State &state) {
   const size_t inputSize = state.range_x();
 
