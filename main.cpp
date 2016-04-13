@@ -26,7 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 //#define BENCHMARKING_DATA_LAYOUT
 //#define BENCHMARKING_ADDITION
 
-#include "benchmarkhelper.h"
+#include "benchmark.h"
 #include "mathfunctions.h"
 #include "vctostring.h"
 
@@ -181,7 +181,7 @@ BENCHMARK_TEMPLATE(veryMelone, float_v, SoaSubscriptAccess, Padding)->Arg(1234);
 BENCHMARK_TEMPLATE(veryMelone, float_v, LoadStoreAccess, Padding)->Arg(1234);
 BENCHMARK_TEMPLATE(veryMelone, float_v, SoaGatherScatterAccess, Padding)->Arg(1234);*/
 
-Vc_BENCHMARK_TEMPLATE_PLANSCHI(veryMelonePlanschi,
+Vc_BENCHMARK_TEMPLATE_PLANSCHI(veryMelone,
     outer_product<Vc_AVX_VECTORS,
                   concat< outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,
                   outer_product<Typelist<AosSubscriptAccess, InterleavedAccess, AosGatherScatterAccess, SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,

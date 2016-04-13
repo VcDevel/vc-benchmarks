@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 using Vc::Common::InterleavedMemoryWrapper;
 
 template<typename T>
-using VectorCoordinate = Vc::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
+using CoordinateContainer = Vc::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
 template<typename T>
-using VectorPolarCoordinate = Vc::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
+using PolarCoordinateContainer = Vc::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
 
 //! Creates random numbers for AoS
 template <typename B, typename T>
@@ -55,8 +55,8 @@ void simulateInputAos(T &input, const size_t size) {
 
 template<typename T>
 struct AosLayout {
-    using IC = VectorCoordinate<typename T::value_type>;
-    using OC = VectorPolarCoordinate<typename T::value_type>;
+    using IC = CoordinateContainer<typename T::value_type>;
+    using OC = PolarCoordinateContainer<typename T::value_type>;
 
     IC inputValues;
     OC outputValues;
@@ -183,9 +183,13 @@ struct AosGatherScatterAccess {
 struct RestScalar {};
 struct Padding {};
 
-template<typename T, typename PP, typename B>
+template<typename TT>
 inline void veryMelone(benchmark::State &state) {
-  using P = typename PP::template type<T>;
+    using T  = typename TT::template at<0>;
+    using A  = typename TT::template at<1>;
+    using B  = typename TT::template at<2>;
+
+    using P = typename A::template type<T>;
 
   const size_t inputSize = state.range_x();
   const size_t missingSize = std::is_same<B, RestScalar>::value ? inputSize % T::size() : 0;
@@ -215,14 +219,5 @@ inline void veryMelone(benchmark::State &state) {
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
-}
-
-template<typename TT>
-inline void veryMelonePlanschi(benchmark::State &state) {
-    using T  = typename TT::template at<0>;
-    using A  = typename TT::template at<1>;
-    using B  = typename TT::template at<2>;
-
-    veryMelone<T, A, B>(state);
 }
 #endif // AOS_H

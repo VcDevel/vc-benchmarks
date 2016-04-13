@@ -26,16 +26,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <vector>
 #include <Vc/vector>
 
-/*template <typename T> struct ArrayOfCoordinates {
-  T x;
-  T y;
-};
-
-template <typename T> struct ArrayOfPolarCoordinates {
-  T radius;
-  T phi;
-};*/
-
 template<typename T>
 using ArrayOfCoordinates = Coordinate<Vc::vector<T, Vc::Allocator<T>>>;
 template<typename T>

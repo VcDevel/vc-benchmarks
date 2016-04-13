@@ -26,26 +26,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <vector>
 
 template<typename T>
-struct VectorizedCoordinate {
-  T vX;
-  T vY;
-};
+using VectorizedCoordinateContainer = std::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
+template<typename T>
+using PolarCoordinateContainer = std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
 
 template<typename T>
-struct VectorizedPolarCoordinate {
-  T vRadius;
-  T vPhi;
-};
-
-template<typename T>
-using VectorVectorizedCoordinate = std::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
-template<typename T>
-using VectorVectorizedPolarCoordinate = std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
-
-template<typename T>
-void simulateInputAovs(VectorVectorizedCoordinate<T> &input, const size_t size) {
-  typename VectorVectorizedCoordinate<T>::iterator aktElement = input.begin();
-  typename VectorVectorizedCoordinate<T>::iterator endElement = (input.begin() + size);
+void simulateInputAovs(VectorizedCoordinateContainer<T> &input, const size_t size) {
+  typename VectorizedCoordinateContainer<T>::iterator aktElement = input.begin();
+  typename VectorizedCoordinateContainer<T>::iterator endElement = (input.begin() + size);
 
   while (aktElement != endElement) {
       aktElement->x = T::Random();
@@ -57,8 +45,8 @@ void simulateInputAovs(VectorVectorizedCoordinate<T> &input, const size_t size) 
 
 template<typename T>
 struct AovsLayout {
-    using IC = VectorVectorizedCoordinate<T>;
-    using OC = VectorVectorizedPolarCoordinate<T>;
+    using IC = VectorizedCoordinateContainer<T>;
+    using OC = PolarCoordinateContainer<T>;
 
     IC inputValues;
     OC outputValues;

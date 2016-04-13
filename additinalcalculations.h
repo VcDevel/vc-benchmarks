@@ -79,8 +79,8 @@ template<typename T>
 typename std::enable_if<std::is_fundamental<T>::value>::type scalar(benchmark::State &state) {
   const size_t inputSize = state.range_x();
 
-  VectorCoordinate<T> inputValues(inputSize);
-  VectorPolarCoordinate<T> outputValues(inputSize);
+  CoordinateContainer<T> inputValues(inputSize);
+  PolarCoordinateContainer<T> outputValues(inputSize);
 
   simulateInputAos(inputValues, inputSize);
 
