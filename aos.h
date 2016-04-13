@@ -294,6 +294,16 @@ inline void veryMelone(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 }
+
+template<typename TT>
+inline void veryMelonePlanschi(benchmark::State &state) {
+    using T  = typename TT::template at<0>;
+    using A  = typename TT::template at<1>;
+    using B  = typename TT::template at<2>;
+
+    veryMelone<T, A, B>(state);
+}
+
 //-----------------------------------------------------------------------------------------------------------
 template<typename T, template<typename> class P, typename U, typename S, typename R>
 inline void aosWith(benchmark::State &state, U loopSetup,  S load, R store) {
