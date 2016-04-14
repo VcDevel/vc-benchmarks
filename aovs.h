@@ -23,12 +23,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef AOVS_H
 #define AOVS_H
-#include <vector>
 
 template<typename T>
 using VectorizedCoordinateContainer = std::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
 template<typename T>
-using PolarCoordinateContainer = std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
+using VectorizedPolarCoordinateContainer = std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
 
 template<typename T>
 void simulateInputAovs(VectorizedCoordinateContainer<T> &input, const size_t size) {
@@ -46,7 +45,7 @@ void simulateInputAovs(VectorizedCoordinateContainer<T> &input, const size_t siz
 template<typename T>
 struct AovsLayout {
     using IC = VectorizedCoordinateContainer<T>;
-    using OC = PolarCoordinateContainer<T>;
+    using OC = VectorizedPolarCoordinateContainer<T>;
 
     IC inputValues;
     OC outputValues;

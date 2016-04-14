@@ -23,56 +23,17 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
-#include "benchmark/benchmark_api.h"
-#include <Vc/Vc>
-#include <string>
-#include <type_traits>
-#include <vector>
-
-inline void escape(void *p) { asm volatile("" : : "g"(p) : "memory"); }
-
-inline void clobber() { asm volatile("" : : : "memory"); }
-
-template <typename T> inline void fakeMemoryModification(T &modifiedValue) {
-  asm volatile("" : "+m"(modifiedValue));
-}
-
-template <typename T, typename B>
-inline void fakeRegisterModification(Vc::Vector<T, B> &modifiedValue) {
-  asm volatile("" : "+x"(modifiedValue));
-}
-
-template <typename T>
-inline void
-fakeRegisterModification(Vc::Vector<T, Vc::VectorAbi::Scalar> &modifiedValue) {
-  asm volatile("" : "+r"(modifiedValue));
-}
-
-template <typename T>
-inline typename std::enable_if<std::is_arithmetic<T>::value>::type
-fakeRegisterModification(T &modifiedValue) {
-  asm volatile("" : "+r"(modifiedValue));
-}
-
-template <typename T> inline void fakeMemoryRead(T &readedValue) {
-  asm volatile("" ::"m"(readedValue));
-}
-
-template <typename T, typename B>
-inline void fakeRegisterRead(Vc::Vector<T, B> &readedValue) {
-  asm volatile("" ::"x"(readedValue));
-}
-
-template <typename T>
-inline void fakeRegisterRead(Vc::Vector<T, Vc::VectorAbi::Scalar> &readedValue) {
-  asm volatile("" ::"r"(readedValue));
-}
-
-template <typename T>
-inline typename std::enable_if<std::is_arithmetic<T>::value>::type
-fakeRegisterRead(T &readedValue) {
-  asm volatile("" ::"r"(readedValue));
-}
+#include <benchmark/benchmark.h>
+#include "verymelone.h"
+#include "registermodification.h"
+#include "mathfunctions.h"
+#include "vctostring.h"
+#include "addition.h"
+#include "aos.h"
+#include "aovs.h"
+#include "soa.h"
+#include "additinalcalculations.h"
+#include "testvalues.h"
 
 typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark*>> UniqueBenchmarkPointer;
 struct TemplateWrapper {
@@ -236,5 +197,11 @@ struct TemplateWrapper {
 
 #define Vc_ALL_VECTORS                                                                   \
   concat<Vc_SCALAR_VECTORS, Vc_SSE_VECTORS, Vc_AVX_VECTORS, Vc_MIC_VECTORS>
+
+#define Vc_ALL_MEMORY_LAYOUT_TESTS \
+concat< outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,\
+                  outer_product<Typelist<AosSubscriptAccess, InterleavedAccess, \
+                  AosGatherScatterAccess, SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,\
+                  Typelist<Padding, RestScalar>>>
 
 #endif // BENCHMARK_H

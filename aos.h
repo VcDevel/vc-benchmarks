@@ -179,45 +179,4 @@ struct InterleavedAccess {
 struct AosGatherScatterAccess {
     template<typename T> using type = AosGatherScatterAccessImpl<T>;
 };
-
-struct RestScalar {};
-struct Padding {};
-
-template<typename TT>
-inline void veryMelone(benchmark::State &state) {
-    using T  = typename TT::template at<0>;
-    using A  = typename TT::template at<1>;
-    using B  = typename TT::template at<2>;
-
-    using P = typename A::template type<T>;
-
-  const size_t inputSize = state.range_x();
-  const size_t missingSize = std::is_same<B, RestScalar>::value ? inputSize % T::size() : 0;
-  const size_t containerSize = std::is_same<B, RestScalar>::value ? inputSize - missingSize : numberOfChunks(inputSize, T::size()) * T::size();
-
-  P magic(containerSize + missingSize);
-
-  while (state.KeepRunning()) {
-      magic.setupLoop();
-
-    for (size_t n = 0; n < containerSize; n += T::size()) {
-      //! Loads the values to vc-vector
-      const auto coord = magic.load(n);
-
-      //! Calculate the polarcoordinates
-      const auto polarCoord = calculatePolarCoordinate(coord); //Ändern
-
-      //! Store the values from the vc-vector
-      magic.store(n, polarCoord);
-    }
-
-    for (size_t n = (inputSize - missingSize); n < inputSize; n++) {
-      magic.setPolarCoordinate(n,
-          calculatePolarCoordinate(magic.coordinate(n))); //Gibt Coordinate FLOAT
-    }
-  }
-
-  state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
-}
 #endif // AOS_H

@@ -23,8 +23,6 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef SOA_H
 #define SOA_H
-#include <vector>
-#include <Vc/vector>
 
 template<typename T>
 using ArrayOfCoordinates = Coordinate<Vc::vector<T, Vc::Allocator<T>>>;
