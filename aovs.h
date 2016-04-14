@@ -24,66 +24,63 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef AOVS_H
 #define AOVS_H
 
-template<typename T>
-using VectorizedCoordinateContainer = std::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
-template<typename T>
-using VectorizedPolarCoordinateContainer = std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
+template <typename T>
+using VectorizedCoordinateContainer =
+    std::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
+template <typename T>
+using VectorizedPolarCoordinateContainer =
+    std::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
 
-template<typename T>
+template <typename T>
 void simulateInputAovs(VectorizedCoordinateContainer<T> &input, const size_t size) {
   typename VectorizedCoordinateContainer<T>::iterator aktElement = input.begin();
   typename VectorizedCoordinateContainer<T>::iterator endElement = (input.begin() + size);
 
   while (aktElement != endElement) {
-      aktElement->x = T::Random();
-      aktElement->y = T::Random();
+    aktElement->x = T::Random();
+    aktElement->y = T::Random();
 
-      aktElement++;
+    aktElement++;
   }
 }
 
-template<typename T>
-struct AovsLayout {
-    using IC = VectorizedCoordinateContainer<T>;
-    using OC = VectorizedPolarCoordinateContainer<T>;
+template <typename T> struct AovsLayout {
+  using IC = VectorizedCoordinateContainer<T>;
+  using OC = VectorizedPolarCoordinateContainer<T>;
 
-    IC inputValues;
-    OC outputValues;
+  IC inputValues;
+  OC outputValues;
 
-    AovsLayout(size_t containerSize)
-        : inputValues(containerSize/T::size()), outputValues(containerSize/T::size())
-    {
-        simulateInputAovs<T>(inputValues, inputValues.size());
-    }
+  AovsLayout(size_t containerSize)
+      : inputValues(containerSize / T::size()), outputValues(containerSize / T::size()) {
+    simulateInputAovs<T>(inputValues, inputValues.size());
+  }
 
-    Coordinate<typename T::value_type> coordinate(size_t index) {
-        Coordinate<typename T::value_type> r;
-        return r;
-    }
+  Coordinate<typename T::value_type> coordinate(size_t index) {
+    Coordinate<typename T::value_type> r;
+    return r;
+  }
 
-    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
-    }
+  void setPolarCoordinate(size_t index,
+                          const PolarCoordinate<typename T::value_type> &coord) {}
 };
 
-template<typename T>
-struct AovsAccessImpl : public AovsLayout<T> {
+template <typename T> struct AovsAccessImpl : public AovsLayout<T> {
 
-    AovsAccessImpl(size_t containerSize) : AovsLayout<T>(containerSize) {
-    }
+  AovsAccessImpl(size_t containerSize) : AovsLayout<T>(containerSize) {}
 
-    void setupLoop() {
-    }
+  void setupLoop() {}
 
-    Coordinate<T> load(size_t index) {
-        return AovsLayout<T>::inputValues[index/T::size()];
-    }
+  Coordinate<T> load(size_t index) {
+    return AovsLayout<T>::inputValues[index / T::size()];
+  }
 
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-        AovsLayout<T>::outputValues[index/T::size()] = coord;
-    }
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    AovsLayout<T>::outputValues[index / T::size()] = coord;
+  }
 };
 
 struct AovsAccess {
-    template<typename T> using type = AovsAccessImpl<T>;
+  template <typename T> using type = AovsAccessImpl<T>;
 };
 #endif // AOVS_H

@@ -21,29 +21,31 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
-#ifndef VERY_MELONE_H
-#define VERY_MELONE_H
+#ifndef BENCHMARK_GENERIC_MEMORY_LAYOUT_H
+#define BENCHMARK_GENERIC_MEMORY_LAYOUT_H
 #include "mathfunctions.h"
 
 struct RestScalar {};
 struct Padding {};
 
-template<typename TT>
-inline void veryMelone(benchmark::State &state) {
-    using T  = typename TT::template at<0>;
-    using A  = typename TT::template at<1>;
-    using B  = typename TT::template at<2>;
+template <typename TT> inline void benchmarkGenericMemoryLayout(benchmark::State &state) {
+  using T = typename TT::template at<0>;
+  using A = typename TT::template at<1>;
+  using B = typename TT::template at<2>;
 
-    typedef typename A::template type<T> P;
+  typedef typename A::template type<T> P;
 
   const size_t inputSize = state.range_x();
-  const size_t missingSize = std::is_same<B, RestScalar>::value ? inputSize % T::size() : 0;
-  const size_t containerSize = std::is_same<B, RestScalar>::value ? inputSize - missingSize : numberOfChunks(inputSize, T::size()) * T::size();
+  const size_t missingSize =
+      std::is_same<B, RestScalar>::value ? inputSize % T::size() : 0;
+  const size_t containerSize = std::is_same<B, RestScalar>::value
+                                   ? inputSize - missingSize
+                                   : numberOfChunks(inputSize, T::size()) * T::size();
 
   P magic(containerSize + missingSize);
 
   while (state.KeepRunning()) {
-      magic.setupLoop();
+    magic.setupLoop();
 
     for (size_t n = 0; n < containerSize; n += T::size()) {
       //! Loads the values to vc-vector
@@ -57,12 +59,13 @@ inline void veryMelone(benchmark::State &state) {
     }
 
     for (size_t n = (inputSize - missingSize); n < inputSize; n++) {
-      magic.setPolarCoordinate(n,
-          calculatePolarCoordinate(magic.coordinate(n))); //Gibt Coordinate FLOAT
+      magic.setPolarCoordinate(
+          n,
+          calculatePolarCoordinate(magic.coordinate(n))); // Gibt Coordinate FLOAT
     }
   }
 
   state.SetItemsProcessed(state.iterations() * state.range_x());
   state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
 }
-#endif // VERY_MELONE_H
+#endif // BENCHMARK_GENERIC_MEMORY_LAYOUT_H

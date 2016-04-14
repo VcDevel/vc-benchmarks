@@ -29,17 +29,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 using Vc::Common::InterleavedMemoryWrapper;
 
-template<typename T>
+template <typename T>
 using CoordinateContainer = Vc::vector<Coordinate<T>, Vc::Allocator<Coordinate<T>>>;
-template<typename T>
-using PolarCoordinateContainer = Vc::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
+template <typename T>
+using PolarCoordinateContainer =
+    Vc::vector<PolarCoordinate<T>, Vc::Allocator<PolarCoordinate<T>>>;
 
 //! Creates random numbers for AoS
-template <typename B, typename T>
-void simulateInputAos(T &input, const size_t size) {
+template <typename B, typename T> void simulateInputAos(T &input, const size_t size) {
   typedef typename T::iterator Iterator;
   using Dist = typename std::conditional<std::is_integral<B>::value,
-  std::uniform_int_distribution<B>, std::uniform_real_distribution<B>>::type;
+                                         std::uniform_int_distribution<B>,
+                                         std::uniform_real_distribution<B>>::type;
 
   std::mt19937 engine(std::random_device{}());
   Dist random(std::numeric_limits<B>::min(), std::numeric_limits<B>::max());
@@ -53,130 +54,123 @@ void simulateInputAos(T &input, const size_t size) {
   }
 }
 
-template<typename T>
-struct AosLayout {
-    using IC = CoordinateContainer<typename T::value_type>;
-    using OC = PolarCoordinateContainer<typename T::value_type>;
+template <typename T> struct AosLayout {
+  using TY = typename T::value_type;
+  using IC = CoordinateContainer<TY>;
+  using OC = PolarCoordinateContainer<TY>;
 
-    IC inputValues;
-    OC outputValues;
+  IC inputValues;
+  OC outputValues;
 
-    AosLayout(size_t containerSize) : inputValues(containerSize), outputValues(containerSize){
-        simulateInputAos<typename T::value_type>(inputValues, inputValues.size());
-    }
+  AosLayout(size_t containerSize)
+      : inputValues(containerSize), outputValues(containerSize) {
+    simulateInputAos<TY>(inputValues, inputValues.size());
+  }
 
-    Coordinate<typename T::value_type> coordinate(size_t index) {
-        Coordinate<typename T::value_type> r;
+  Coordinate<TY> coordinate(size_t index) {
+    Coordinate<TY> r;
 
-        r.x = inputValues[index].x;
-        r.y = inputValues[index].y;
+    r.x = inputValues[index].x;
+    r.y = inputValues[index].y;
 
-        return r;
-    }
+    return r;
+  }
 
-    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
-        outputValues[index].radius = coord.radius;
-        outputValues[index].phi    = coord.phi;
-    }
+  void setPolarCoordinate(size_t index, const PolarCoordinate<TY> &coord) {
+    outputValues[index].radius = coord.radius;
+    outputValues[index].phi = coord.phi;
+  }
 };
 
-template<typename T>
-struct AosSubscriptAccessImpl : public AosLayout<T> {
+template <typename T> struct AosSubscriptAccessImpl : public AosLayout<T> {
 
-    AosSubscriptAccessImpl(size_t containerSize) : AosLayout<T>(containerSize) {
+  AosSubscriptAccessImpl(size_t containerSize) : AosLayout<T>(containerSize) {}
+
+  void setupLoop() {}
+
+  Coordinate<T> load(size_t index) {
+    Coordinate<T> r;
+
+    for (size_t m = 0; m < T::size(); m++) {
+      r.x[m] = AosLayout<T>::inputValues[(index + m)].x;
+      r.y[m] = AosLayout<T>::inputValues[(index + m)].y;
     }
 
-    void setupLoop() {
+    return r;
+  }
+
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    for (size_t m = 0; m < T::size(); m++) {
+      AosLayout<T>::outputValues[(index + m)].radius = coord.radius[m];
+      AosLayout<T>::outputValues[(index + m)].phi = coord.phi[m];
     }
-
-    Coordinate<T> load(size_t index) {
-        Coordinate<T> r;
-
-        for (size_t m = 0; m < T::size(); m++) {
-          r.x[m] = AosLayout<T>::inputValues[(index + m)].x;
-          r.y[m] = AosLayout<T>::inputValues[(index + m)].y;
-        }
-
-        return r;
-    }
-
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-      for (size_t m = 0; m < T::size(); m++) {
-        AosLayout<T>::outputValues[(index + m)].radius = coord.radius[m];
-        AosLayout<T>::outputValues[(index + m)].phi = coord.phi[m];
-      }
-    }
+  }
 };
 
-template<typename T>
-struct InterleavedAccessImpl : public AosLayout<T> {
-    using IW = InterleavedMemoryWrapper<Coordinate<typename T::value_type>, T>;
-    using OW = InterleavedMemoryWrapper<PolarCoordinate<typename T::value_type>, T>;
+template <typename T> struct InterleavedAccessImpl : public AosLayout<T> {
+  using TY = typename T::value_type;
+  using IW = InterleavedMemoryWrapper<Coordinate<TY>, T>;
+  using OW = InterleavedMemoryWrapper<PolarCoordinate<TY>, T>;
 
-    IW inputWrapper;
-    OW outputWrapper;
+  IW inputWrapper;
+  OW outputWrapper;
 
-    InterleavedAccessImpl(size_t containerSize)
-    : AosLayout<T>(containerSize), inputWrapper(AosLayout<T>::inputValues.data()),
-      outputWrapper(AosLayout<T>::outputValues.data()) {
-    }
+  InterleavedAccessImpl(size_t containerSize)
+      : AosLayout<T>(containerSize), inputWrapper(AosLayout<T>::inputValues.data()),
+        outputWrapper(AosLayout<T>::outputValues.data()) {}
 
-    void setupLoop() {
-    }
+  void setupLoop() {}
 
-    Coordinate<T> load(size_t index) {
-        Coordinate<T> r;
+  Coordinate<T> load(size_t index) {
+    Coordinate<T> r;
 
-        Vc::tie(r.x, r.y) = inputWrapper[index];
-        return r;
-    }
+    Vc::tie(r.x, r.y) = inputWrapper[index];
+    return r;
+  }
 
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-        outputWrapper[index] = Vc::tie(coord.radius, coord.phi);
-    }
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    outputWrapper[index] = Vc::tie(coord.radius, coord.phi);
+  }
 };
 
-template<typename T>
-struct AosGatherScatterAccessImpl : public AosLayout<T> {
-typedef typename T::IndexType IT;
+template <typename T> struct AosGatherScatterAccessImpl : public AosLayout<T> {
+  typedef typename T::IndexType IT;
+  IT indexes;
 
-    IT indexes;
+  AosGatherScatterAccessImpl(size_t containerSize)
+      : AosLayout<T>(containerSize), indexes(IT::IndexesFromZero()) {}
 
-    AosGatherScatterAccessImpl(size_t containerSize)
-        : AosLayout<T>(containerSize),
-        indexes(IT::IndexesFromZero()) {
-    }
+  void setupLoop() { indexes = IT::IndexesFromZero(); }
 
-    void setupLoop() {
-        indexes = IT::IndexesFromZero();
-    }
+  Coordinate<T> load(size_t index) {
+    Coordinate<T> r;
 
-    Coordinate<T> load(size_t index) {
-        Coordinate<T> r;
+    r.x = AosLayout<T>::inputValues[indexes][&Coordinate<typename T::value_type>::x];
+    r.y = AosLayout<T>::inputValues[indexes][&Coordinate<typename T::value_type>::y];
 
-        r.x = AosLayout<T>::inputValues[indexes][&Coordinate<typename T::value_type>::x];
-        r.y = AosLayout<T>::inputValues[indexes][&Coordinate<typename T::value_type>::y];
+    return r;
+  }
 
-        return r;
-    }
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    AosLayout<
+        T>::outputValues[indexes][&PolarCoordinate<typename T::value_type>::radius] =
+        coord.radius;
+    AosLayout<T>::outputValues[indexes][&PolarCoordinate<typename T::value_type>::phi] =
+        coord.phi;
 
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-        AosLayout<T>::outputValues[indexes][&PolarCoordinate<typename T::value_type>::radius] = coord.radius;
-        AosLayout<T>::outputValues[indexes][&PolarCoordinate<typename T::value_type>::phi] = coord.phi;
-
-        indexes += T::size();
-    }
+    indexes += T::size();
+  }
 };
 
 struct AosSubscriptAccess {
-    template<typename T> using type = AosSubscriptAccessImpl<T>;
+  template <typename T> using type = AosSubscriptAccessImpl<T>;
 };
 
 struct InterleavedAccess {
-    template<typename T> using type = InterleavedAccessImpl<T>;
+  template <typename T> using type = InterleavedAccessImpl<T>;
 };
 
 struct AosGatherScatterAccess {
-    template<typename T> using type = AosGatherScatterAccessImpl<T>;
+  template <typename T> using type = AosGatherScatterAccessImpl<T>;
 };
 #endif // AOS_H

@@ -23,6 +23,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "benchmark.h"
 
-Vc_BENCHMARK_TEMPLATE_PLANSCHI(veryMelone, outer_product<Vc_AVX_VECTORS, Vc_ALL_MEMORY_LAYOUT_TESTS>)->Apply(dynamicAllCacheSize);
+Vc_BENCHMARK_TEMPLATE(benchmarkGenericMemoryLayout,
+                      outer_product<Vc_AVX_VECTORS, Vc_ALL_MEMORY_LAYOUT_TESTS>)
+    ->Apply(dynamicAllCacheSize);
 BENCHMARK_MAIN();
-

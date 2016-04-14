@@ -24,59 +24,56 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef ADDITINAL_CALCULATIONS_H
 #define ADDITINAL_CALCULATIONS_H
 
-template<typename T>
-struct BaselineLayout {
-    using IC = Coordinate<T>;
-    using OC = PolarCoordinate<T>;
+template <typename T> struct BaselineLayout {
+  using IC = Coordinate<T>;
+  using OC = PolarCoordinate<T>;
 
-    IC inputValue;
-    OC outputValue;
+  IC inputValue;
+  OC outputValue;
 
-    BaselineLayout(size_t containerSize) {
-        inputValue.x = T::Random();
-        inputValue.y = T::Random();
-    }
+  BaselineLayout(size_t containerSize) {
+    inputValue.x = T::Random();
+    inputValue.y = T::Random();
+  }
 
-    Coordinate<typename T::value_type> coordinate(size_t index) {
-        Coordinate<typename T::value_type> r;
-        return r;
-    }
+  Coordinate<typename T::value_type> coordinate(size_t index) {
+    Coordinate<typename T::value_type> r;
+    return r;
+  }
 
-    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
-    }
+  void setPolarCoordinate(size_t index,
+                          const PolarCoordinate<typename T::value_type> &coord) {}
 };
 
-template<typename T>
-struct BaselineImpl : public BaselineLayout<T> {
-    BaselineImpl(size_t containerSize) : BaselineLayout<T>(containerSize) {
-    }
+template <typename T> struct BaselineImpl : public BaselineLayout<T> {
+  BaselineImpl(size_t containerSize) : BaselineLayout<T>(containerSize) {}
 
-    void setupLoop() {
-    }
+  void setupLoop() {}
 
-    Coordinate<T> load(size_t index) {
-         fakeMemoryModification(BaselineLayout<T>::inputValue.x);
-         fakeMemoryModification(BaselineLayout<T>::inputValue.y);
+  Coordinate<T> load(size_t index) {
+    fakeMemoryModification(BaselineLayout<T>::inputValue.x);
+    fakeMemoryModification(BaselineLayout<T>::inputValue.y);
 
-         return BaselineLayout<T>::inputValue;
-    }
+    return BaselineLayout<T>::inputValue;
+  }
 
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-         BaselineLayout<T>::outputValue = coord;
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    BaselineLayout<T>::outputValue = coord;
 
-         fakeRegisterRead(BaselineLayout<T>::outputValue.radius);
-         fakeRegisterRead(BaselineLayout<T>::outputValue.phi);
-    }
+    fakeRegisterRead(BaselineLayout<T>::outputValue.radius);
+    fakeRegisterRead(BaselineLayout<T>::outputValue.phi);
+  }
 };
 
 struct Baseline {
-    template<typename T> using type = BaselineImpl<T>;
+  template <typename T> using type = BaselineImpl<T>;
 };
 
 //! Scalar
-template<typename T>
+template <typename T>
 [[deprecated("Use scalar vectors instead")]]
-typename std::enable_if<std::is_fundamental<T>::value>::type scalar(benchmark::State &state) {
+    typename std::enable_if<std::is_fundamental<T>::value>::type
+    scalar(benchmark::State &state) {
   const size_t inputSize = state.range_x();
 
   CoordinateContainer<T> inputValues(inputSize);

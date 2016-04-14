@@ -38,9 +38,5 @@ template <typename T> void additionVectorVector(benchmark::State &state) {
   }
 
   state.SetItemsProcessed(T::size());
-
-#ifdef USE_LOG
-  std::clog << "Finnished: AdditionVecVec\n";
-#endif
 }
 #endif // ADDITION_H

@@ -24,16 +24,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef SOA_H
 #define SOA_H
 
-template<typename T>
+template <typename T>
 using ArrayOfCoordinates = Coordinate<Vc::vector<T, Vc::Allocator<T>>>;
-template<typename T>
+template <typename T>
 using ArrayOfPolarCoordinates = PolarCoordinate<Vc::vector<T, Vc::Allocator<T>>>;
 
 //! Creates random numbers for SoA
 template <typename B, typename T>
 void simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
   using Dist = typename std::conditional<std::is_integral<B>::value,
-  std::uniform_int_distribution<B>, std::uniform_real_distribution<B>>::type;
+                                         std::uniform_int_distribution<B>,
+                                         std::uniform_real_distribution<B>>::type;
   std::mt19937 engine(std::random_device{}());
   Dist random(std::numeric_limits<B>::min(), std::numeric_limits<B>::max());
 
@@ -43,129 +44,117 @@ void simulateInputSoa(ArrayOfCoordinates<T> &input, const size_t size) {
   }
 }
 
-template<typename T>
-struct SoaLayout {
-    using IC = ArrayOfCoordinates<typename T::value_type>;
-    using OC = ArrayOfPolarCoordinates<typename T::value_type>;
+template <typename T> struct SoaLayout {
+  using TY = typename T::value_type;
+  using IC = ArrayOfCoordinates<typename T::value_type>;
+  using OC = ArrayOfPolarCoordinates<typename T::value_type>;
 
-    IC inputValues;
-    OC outputValues;
+  IC inputValues;
+  OC outputValues;
 
-    SoaLayout(size_t containerSize) {
-        inputValues.x.reserve(containerSize);
-        inputValues.y.reserve(containerSize);
+  SoaLayout(size_t containerSize) {
+    inputValues.x.reserve(containerSize);
+    inputValues.y.reserve(containerSize);
 
-        outputValues.radius.reserve(containerSize);
-        outputValues.phi.reserve(containerSize);
-    }
+    outputValues.radius.reserve(containerSize);
+    outputValues.phi.reserve(containerSize);
+  }
 
-    Coordinate<typename T::value_type> coordinate(size_t index) {
-        Coordinate<typename T::value_type> r;
+  Coordinate<TY> coordinate(size_t index) {
+    Coordinate<TY> r;
 
-        r.x = inputValues.x[index];
-        r.y = inputValues.y[index];
+    r.x = inputValues.x[index];
+    r.y = inputValues.y[index];
 
-        return r;
-    }
+    return r;
+  }
 
-    void setPolarCoordinate(size_t index, const PolarCoordinate<typename T::value_type> &coord) {
-        outputValues.radius[index] = coord.radius;
-        outputValues.phi[index]    = coord.phi;
-    }
+  void setPolarCoordinate(size_t index, const PolarCoordinate<TY> &coord) {
+    outputValues.radius[index] = coord.radius;
+    outputValues.phi[index] = coord.phi;
+  }
 };
 
-template<typename T>
-struct SoaSubscriptAccessImpl : public SoaLayout<T> {
-    SoaSubscriptAccessImpl(size_t containerSize)
-    : SoaLayout<T>(containerSize) {
+template <typename T> struct SoaSubscriptAccessImpl : public SoaLayout<T> {
+  SoaSubscriptAccessImpl(size_t containerSize) : SoaLayout<T>(containerSize) {}
+
+  void setupLoop() {}
+
+  Coordinate<T> load(size_t index) {
+    Coordinate<T> r;
+
+    for (size_t m = 0; m < T::size(); m++) {
+      r.x[m] = SoaLayout<T>::inputValues.x[(index + m)];
+      r.y[m] = SoaLayout<T>::inputValues.y[(index + m)];
     }
 
-    void setupLoop() {
+    return r;
+  }
+
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    for (size_t m = 0; m < T::size(); m++) {
+      SoaLayout<T>::outputValues.radius[(index + m)] = coord.radius[m];
+      SoaLayout<T>::outputValues.phi[(index + m)] = coord.phi[m];
     }
-
-    Coordinate<T> load(size_t index) {
-        Coordinate<T> r;
-
-        for (size_t m = 0; m < T::size(); m++) {
-          r.x[m] = SoaLayout<T>::inputValues.x[(index + m)];
-          r.y[m] = SoaLayout<T>::inputValues.y[(index + m)];
-        }
-
-        return r;
-    }
-
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-      for (size_t m = 0; m < T::size(); m++) {
-        SoaLayout<T>::outputValues.radius[(index + m)] = coord.radius[m];
-        SoaLayout<T>::outputValues.phi[(index + m)] = coord.phi[m];
-      }
-    }
+  }
 };
 
-template<typename T>
-struct LoadStoreAccessImpl : public SoaLayout<T> {
-    LoadStoreAccessImpl(size_t containerSize)
-    : SoaLayout<T>(containerSize) {
-    }
+template <typename T> struct LoadStoreAccessImpl : public SoaLayout<T> {
+  LoadStoreAccessImpl(size_t containerSize) : SoaLayout<T>(containerSize) {}
 
-    void setupLoop() {
-    }
+  void setupLoop() {}
 
-    Coordinate<T> load(size_t index) {
-        Coordinate<T> r;
+  Coordinate<T> load(size_t index) {
+    Coordinate<T> r;
 
-        r.x.load(SoaLayout<T>::inputValues.x.data() + index, Vc::Aligned);
-        r.y.load(SoaLayout<T>::inputValues.y.data() + index, Vc::Aligned);
+    r.x.load(SoaLayout<T>::inputValues.x.data() + index, Vc::Aligned);
+    r.y.load(SoaLayout<T>::inputValues.y.data() + index, Vc::Aligned);
 
-        return r;
-    }
+    return r;
+  }
 
-    void store(size_t index, const PolarCoordinate<T> &coord) {
+  void store(size_t index, const PolarCoordinate<T> &coord) {
 
-      coord.radius.store((SoaLayout<T>::outputValues.radius.data() + index), Vc::Aligned);
-      coord.phi.store((SoaLayout<T>::outputValues.phi.data() + index), Vc::Aligned);
-    }
+    coord.radius.store((SoaLayout<T>::outputValues.radius.data() + index), Vc::Aligned);
+    coord.phi.store((SoaLayout<T>::outputValues.phi.data() + index), Vc::Aligned);
+  }
 };
 
-template<typename T>
-struct SoaGatherScatterAccessImpl : public SoaLayout<T> {
-typedef typename T::IndexType IT;
+template <typename T> struct SoaGatherScatterAccessImpl : public SoaLayout<T> {
+  typedef typename T::IndexType IT;
 
-    IT indexes;
+  IT indexes;
 
-    SoaGatherScatterAccessImpl(size_t containerSize)
-    : SoaLayout<T>(containerSize), indexes(IT::IndexesFromZero()) {
-    }
+  SoaGatherScatterAccessImpl(size_t containerSize)
+      : SoaLayout<T>(containerSize), indexes(IT::IndexesFromZero()) {}
 
-    void setupLoop() {
-        indexes = IT::IndexesFromZero();
-    }
+  void setupLoop() { indexes = IT::IndexesFromZero(); }
 
-    Coordinate<T> load(size_t index) {
-        Coordinate<T> r;
+  Coordinate<T> load(size_t index) {
+    Coordinate<T> r;
 
-        r.x = SoaLayout<T>::inputValues.x[indexes];
-        r.y = SoaLayout<T>::inputValues.y[indexes];
+    r.x = SoaLayout<T>::inputValues.x[indexes];
+    r.y = SoaLayout<T>::inputValues.y[indexes];
 
-        return r;
-    }
+    return r;
+  }
 
-    void store(size_t index, const PolarCoordinate<T> &coord) {
-          SoaLayout<T>::outputValues.radius[indexes] = coord.radius;
-          SoaLayout<T>::outputValues.phi[indexes] = coord.phi;
-          indexes += T::size();
-    }
+  void store(size_t index, const PolarCoordinate<T> &coord) {
+    SoaLayout<T>::outputValues.radius[indexes] = coord.radius;
+    SoaLayout<T>::outputValues.phi[indexes] = coord.phi;
+    indexes += T::size();
+  }
 };
 
 struct SoaSubscriptAccess {
-    template<typename T> using type = SoaSubscriptAccessImpl<T>;
+  template <typename T> using type = SoaSubscriptAccessImpl<T>;
 };
 
 struct LoadStoreAccess {
-    template<typename T> using type = LoadStoreAccessImpl<T>;
+  template <typename T> using type = LoadStoreAccessImpl<T>;
 };
 
 struct SoaGatherScatterAccess {
-    template<typename T> using type = SoaGatherScatterAccessImpl<T>;
+  template <typename T> using type = SoaGatherScatterAccessImpl<T>;
 };
 #endif // SOA_H
