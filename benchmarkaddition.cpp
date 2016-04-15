@@ -23,5 +23,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "benchmark.h"
 
-Vc_BENCHMARK_TEMPLATE(additionVectorVector, Vc_ALL_VECTORS)->Arg(1234);
+Vc_BENCHMARK_TEMPLATE(oneOp,
+    concat<
+        outer_product<Vc_ALL_VECTORS, Typelist<Addition, Substraction, Multiplication, Division>>,
+        outer_product<Vc_ALL_INT_VECTORS, Typelist<Modulo>>,
+        outer_product<Vc_ALL_FLOAT_VECTORS, Typelist<Sinus, Cosinus>>
+    >
+);
 BENCHMARK_MAIN();

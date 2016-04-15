@@ -168,33 +168,45 @@ struct TemplateWrapper {
   int BENCHMARK_PRIVATE_CONCAT(variable, n_, __LINE__) =                                 \
       BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<__VA_ARGS__::size() - 1>()
 
-#define Vc_SCALAR_VECTORS                                                                \
-  Typelist<Vc::Scalar::double_v, Vc::Scalar::float_v, Vc::Scalar::int_v,                 \
-           Vc::Scalar::uint_v, Vc::Scalar::short_v, Vc::Scalar::ushort_v>
+#define Vc_SCALAR_INT_VECTORS Typelist<Vc::Scalar::int_v, Vc::Scalar::uint_v, Vc::Scalar::short_v, Vc::Scalar::ushort_v>
+#define Vc_SCALAR_FLOAT_VECTORS Typelist<Vc::Scalar::double_v, Vc::Scalar::float_v>
+#define Vc_SCALAR_VECTORS concat<Vc_SCALAR_FLOAT_VECTORS, Vc_SCALAR_INT_VECTORS>
+
 #ifdef Vc_IMPL_SSE
-#define Vc_SSE_VECTORS                                                                   \
-  Typelist<Vc::SSE::double_v, Vc::SSE::float_v, Vc::SSE::int_v, Vc::SSE::uint_v,         \
-           Vc::SSE::short_v, Vc::SSE::ushort_v>
+#define Vc_SSE_INT_VECTORS Typelist<Vc::SSE::int_v, Vc::SSE::uint_v, Vc::SSE::short_v, Vc::SSE::ushort_v>
+#define Vc_SSE_FLOAT_VECTORS Typelist<Vc::SSE::double_v, Vc::SSE::float_v>
+#define Vc_SSE_VECTORS concat<Vc_SSE_INT_VECTORS, Vc_SSE_FLOAT_VECTORS>
 #else
+#define Vc_SSE_INT_VECTORS Typelist<>
+#define Vc_SSE_FLOAT_VECTORS Typelist<>
 #define Vc_SSE_VECTORS Typelist<>
 #endif // Vc_IMPL_SSE
 
 #ifdef Vc_IMPL_AVX
-#define Vc_AVX_VECTORS Typelist<Vc::AVX::double_v, Vc::AVX::float_v>
+#define Vc_AVX_INT_VECTORS Typelist<Vc::AVX::int_v, Vc::AVX::uint_v, Vc::AVX::short_v, Vc::AVX::ushort_v>
+#define Vc_AVX_FLOAT_VECTORS Typelist<Vc::AVX::double_v, Vc::AVX::float_v>
+#define Vc_AVX_VECTORS Vc_AVX_FLOAT_VECTORS
 #else
+#define Vc_AVX_INT_VECTORS Typelist<>
+#define Vc_AVX_FLOAT_VECTORS Typelist<>
 #define Vc_AVX_VECTORS Typelist<>
 #endif // Vc_IMPL_AVX
 
 #ifdef Vc_IMPL_MIC
-#define Vc_MIC_VECTORS                                                                   \
-  Typelist<Vc::MIC::double_v, Vc::MIC::float_v, Vc::MIC::int_v, Vc::MIC::uint_v,         \
-           Vc::MIC::short_v, Vc::MIC::ushort_v>
+#define Vc_MIC_INT_VECTORS Typelist<Vc::MIC::int_v, Vc::MIC::uint_v, Vc::MIC::short_v, Vc::MIC::ushort_v>
+#define Vc_MIC_FLOAT Typelist<Vc::MIC::double_v, Vc::MIC::float_v>
+#define Vc_MIC_VECTORS concat<Vc_MIC_INT_VECTORS, Vc_MIC_FLOAT_VECTORS>
 #else
+#define Vc_MIC_INT_VECTORS Typelist<>
+#define Vc_MIC_FLOAT_VECTORS Typelist<>
 #define Vc_MIC_VECTORS Typelist<>
 #endif // Vc_IMPL_MIC
 
 #define Vc_ALL_VECTORS                                                                   \
   concat<Vc_SCALAR_VECTORS, Vc_SSE_VECTORS, Vc_AVX_VECTORS, Vc_MIC_VECTORS>
+
+#define Vc_ALL_INT_VECTORS concat<Vc_SCALAR_INT_VECTORS, Vc_SSE_INT_VECTORS, Vc_AVX_INT_VECTORS, Vc_MIC_INT_VECTORS>
+#define Vc_ALL_FLOAT_VECTORS concat<Vc_SCALAR_FLOAT_VECTORS, Vc_SSE_FLOAT_VECTORS, Vc_AVX_FLOAT_VECTORS, Vc_MIC_FLOAT_VECTORS>
 
 #define Vc_ALL_MEMORY_LAYOUT_TESTS                                                       \
   concat<outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,               \
@@ -202,5 +214,8 @@ struct TemplateWrapper {
              Typelist<AosSubscriptAccess, InterleavedAccess, AosGatherScatterAccess,     \
                       SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,      \
              Typelist<Padding, RestScalar>>>
+
+#define Vc_ALL_BASIC_ARITHMETICS \
+  Typelist<Addition, Substraction, Multiplication, Division, Modulo, Cosinus>
 
 #endif // BENCHMARK_H
