@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VC_TO_STRING_H
 #include <sstream>
 #include "typelist.h"
+#include <Vc/Vc>
 
 // typeToString {{{1
 template <typename T> inline std::string typeToString();

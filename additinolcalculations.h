@@ -23,6 +23,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef ADDITINAL_CALCULATIONS_H
 #define ADDITINAL_CALCULATIONS_H
+#include "registermodification.h"
 
 template <typename T> struct BaselineLayout {
   using IC = Coordinate<T>;

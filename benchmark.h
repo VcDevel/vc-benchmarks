@@ -24,16 +24,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
 #include <benchmark/benchmark.h>
-#include "benchmarkgenericmemorylayout.h"
-#include "registermodification.h"
-#include "mathfunctions.h"
+#include <memory>
 #include "vctostring.h"
-#include "arithmetics.h"
-#include "aos.h"
-#include "aovs.h"
-#include "soa.h"
-#include "additinalcalculations.h"
-#include "testvalues.h"
 
 typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark *>>
     UniqueBenchmarkPointer;
@@ -217,14 +209,5 @@ struct TemplateWrapper {
   concat<Vc_SCALAR_FLOAT_VECTORS, Vc_SSE_FLOAT_VECTORS, Vc_AVX_FLOAT_VECTORS,            \
          Vc_MIC_FLOAT_VECTORS>
 
-#define Vc_ALL_MEMORY_LAYOUT_TESTS                                                       \
-  concat<outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,               \
-         outer_product<                                                                  \
-             Typelist<AosSubscriptAccess, InterleavedAccess, AosGatherScatterAccess,     \
-                      SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,      \
-             Typelist<Padding, RestScalar>>>
-
-#define Vc_ALL_BASIC_ARITHMETICS                                                         \
-  Typelist<Addition, Substraction, Multiplication, Division>
-
+BENCHMARK_MAIN();
 #endif // BENCHMARK_H
