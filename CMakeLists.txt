@@ -18,8 +18,8 @@ target_compile_options(benchmarkMemoryLayout PRIVATE "-std=c++11;${Vc_COMPILE_FL
 set_target_properties(benchmarkMemoryLayout PROPERTIES LINK_FLAGS -pthread)
 target_link_libraries(benchmarkMemoryLayout ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})
 
-add_executable(benchmarkAddition benchmarkaddition.cpp)
-target_include_directories(benchmarkAddition PRIVATE "${Vc_INCLUDE_DIR};${GGBENCH_INCLUDE_DIR}")
-target_compile_options(benchmarkAddition PRIVATE "-std=c++11;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
-set_target_properties(benchmarkAddition PROPERTIES LINK_FLAGS -pthread)
-target_link_libraries(benchmarkAddition ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})
+add_executable(benchmarkArithmetics benchmarkarithmetics.cpp)
+target_include_directories(benchmarkArithmetics PRIVATE "${Vc_INCLUDE_DIR};${GGBENCH_INCLUDE_DIR}")
+target_compile_options(benchmarkArithmetics PRIVATE "-std=c++11;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
+set_target_properties(benchmarkArithmetics PROPERTIES LINK_FLAGS -pthread)
+target_link_libraries(benchmarkArithmetics ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})

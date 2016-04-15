@@ -31,14 +31,12 @@ using Vc::float_v;
 using Vc::sqrt;
 using Vc::atan2;
 
-template<typename T>
-struct Coordinate {
+template <typename T> struct Coordinate {
   T x;
   T y;
 };
 
-template<typename T>
-struct PolarCoordinate {
+template <typename T> struct PolarCoordinate {
   T radius;
   T phi;
 };
@@ -48,14 +46,14 @@ inline std::tuple<T, T> calculatePolarCoordinate(const T &x, const T &y) {
   return std::make_tuple(sqrt(((x * x) + (y * y))), atan2(y, x) * 57.295780181884765625f);
 }
 
-template<typename T>
+template <typename T>
 inline PolarCoordinate<T> calculatePolarCoordinate(const Coordinate<T> &coord) {
-    PolarCoordinate<T> r;
+  PolarCoordinate<T> r;
 
-    r.radius = sqrt((coord.x * coord.x) + (coord.y * coord.y));
-    r.phi    = atan2(coord.y, coord.x) * 57.295780181884765625f;
+  r.radius = sqrt((coord.x * coord.x) + (coord.y * coord.y));
+  r.phi = atan2(coord.y, coord.x) * 57.295780181884765625f;
 
-    return r;
+  return r;
 }
 
 constexpr size_t numberOfChunks(size_t inputSize, size_t chunkSize) {
