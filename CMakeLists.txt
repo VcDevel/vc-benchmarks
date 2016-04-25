@@ -20,6 +20,5 @@ MACRO(add_benchmark title)
     target_link_libraries(${title} ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})
 endmacro()
 
-
-add_benchmark(benchmarkmemorylayout)
-add_benchmark(benchmarkarithmetics)
+add_benchmark(arithmetics)
+add_benchmark(memorylayout)
