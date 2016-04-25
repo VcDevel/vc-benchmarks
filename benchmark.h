@@ -23,9 +23,10 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
+
 #include <benchmark/benchmark.h>
 #include <memory>
-#include "vctostring.h"
+#include "typetostring.h"
 
 typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark *>>
     UniqueBenchmarkPointer;
