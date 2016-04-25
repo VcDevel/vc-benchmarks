@@ -26,6 +26,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 #include <benchmark/benchmark.h>
 #include <memory>
+#include "fakereadmodify.h"
 #include "typetostring.h"
 
 typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark *>>
