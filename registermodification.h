@@ -21,59 +21,65 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
+
 #ifndef REGISTER_MODIFICATION_H
 #define REGISTER_MODIFICATION_H
+
 #include <Vc/Vc>
 
-inline void escape(void *p) { asm volatile("" : : "g"(p) : "memory"); }
+Vc_INTRINSIC void escape(void *p) { asm volatile("" : : "g"(p) : "memory"); }
 
-inline void clobber() { asm volatile("" : : : "memory"); }
+Vc_INTRINSIC void clobber() { asm volatile("" : : : "memory"); }
 
-template <typename T> inline void fakeMemoryModification(T &x) {
+template <typename T> Vc_INTRINSIC void fakeMemoryModification(T &x) {
   asm volatile("" : "+m"(x));
 }
 
 template <typename T, typename B>
-inline void fakeRegisterModification(Vc::Vector<T, B> &x) {
+Vc_INTRINSIC void fakeRegisterModification(Vc::Vector<T, B> &x) {
   asm volatile("" : "+x"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_integral<T>::value>::type fakeRegisterModification(
-    T &x) {
+Vc_INTRINSIC typename std::enable_if<std::is_integral<T>::value>::type
+fakeRegisterModification(T &x) {
   asm volatile("" : "+r"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value>::type
+Vc_INTRINSIC typename std::enable_if<std::is_floating_point<T>::value>::type
 fakeRegisterModification(T &x) {
   asm volatile("" : "+x"(x));
 }
 
 template <typename T>
-inline void fakeRegisterModification(Vc::Vector<T, Vc::VectorAbi::Scalar> &x) {
+Vc_INTRINSIC void fakeRegisterModification(Vc::Vector<T, Vc::VectorAbi::Scalar> &x) {
   fakeRegisterModification(x.data());
 }
 
-template <typename T> inline void fakeMemoryRead(T &x) { asm volatile("" ::"m"(x)); }
+template <typename T> Vc_INTRINSIC void fakeMemoryRead(T &x) {
+  asm volatile("" ::"m"(x));
+}
 
-template <typename T, typename B> inline void fakeRegisterRead(Vc::Vector<T, B> &x) {
+template <typename T, typename B>
+Vc_INTRINSIC void fakeRegisterRead(Vc::Vector<T, B> &x) {
   asm volatile("" ::"x"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_integral<T>::value>::type fakeRegisterRead(T &x) {
+Vc_INTRINSIC typename std::enable_if<std::is_integral<T>::value>::type fakeRegisterRead(
+    T &x) {
   asm volatile("" ::"r"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value>::type fakeRegisterRead(
-    T &x) {
+Vc_INTRINSIC typename std::enable_if<std::is_floating_point<T>::value>::type
+fakeRegisterRead(T &x) {
   asm volatile("" ::"x"(x));
 }
 
 template <typename T>
-inline void fakeRegisterRead(Vc::Vector<T, Vc::VectorAbi::Scalar> &x) {
+Vc_INTRINSIC void fakeRegisterRead(Vc::Vector<T, Vc::VectorAbi::Scalar> &x) {
   fakeRegisterRead(x.data());
 }
 
