@@ -29,6 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include "typelist.h"
 #include <Vc/Vc>
+#ifdef HAVE_CXX_ABI_H
+#include <cxxabi.h>
+#endif
 
 // typeToString {{{1
 template <typename T> inline std::string typeToString();
@@ -93,7 +96,7 @@ typeToString_impl(V const &,
   } else if (std::is_same<V, Vc::MIC::Vector<T>>::value) {
     s << "MIC::";
   }
-  s << "Vector<" << typeToString<T>() << '>';
+  s << typeToString<T>() << "_v";
   return s.str();
 }
 template <typename V>
@@ -111,7 +114,7 @@ typeToString_impl(V const &,
   } else if (std::is_same<V, Vc::MIC::Mask<T>>::value) {
     s << "MIC::";
   }
-  s << "Mask<" << typeToString<T>() << '>';
+  s << typeToString<T>() << "_m";
   return s.str();
 }
 // generic fallback (typeid::name) {{{2
@@ -120,7 +123,14 @@ inline std::string typeToString_impl(
     T const &,
     typename std::enable_if<!Vc::is_simd_vector<T>::value && !Vc::is_simd_mask<T>::value,
                             int>::type = 0) {
+#ifdef HAVE_CXX_ABI_H
+  char buf[1024];
+  size_t size = 1024;
+  abi::__cxa_demangle(typeid(T).name(), buf, &size, nullptr);
+  return std::string{buf};
+#else
   return typeid(T).name();
+#endif
 }
 // typeToString specializations {{{2
 template <typename T> inline std::string typeToString() { return typeToString_impl(T()); }

@@ -12,6 +12,12 @@ if(NOT GGBENCH_LIBRARIES OR NOT GGBENCH_INCLUDE_DIR)
    message(FATAL_ERROR "Required Google Benchmark library not found (https://github.com/google/benchmark)")
 endif()
 
+CHECK_CXX_SOURCE_COMPILES("#include <cxxabi.h>
+int main() { return 0; }" cxx_abi_header_works)
+if(cxx_abi_header_works)
+   add_definitions(-DHAVE_CXX_ABI_H)
+endif()
+
 MACRO(add_benchmark title)
     add_executable(${title} ${title}.cpp)
     target_include_directories(${title} PRIVATE "${Vc_INCLUDE_DIR};${GGBENCH_INCLUDE_DIR}")
