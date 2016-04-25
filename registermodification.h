@@ -29,53 +29,47 @@ inline void escape(void *p) { asm volatile("" : : "g"(p) : "memory"); }
 
 inline void clobber() { asm volatile("" : : : "memory"); }
 
-template <typename T> inline void fakeMemoryModification(T &modifiedValue) {
-  asm volatile("" : "+m"(modifiedValue));
+template <typename T> inline void fakeMemoryModification(T &x) {
+  asm volatile("" : "+m"(x));
 }
 
 template <typename T, typename B>
-inline void fakeRegisterModification(Vc::Vector<T, B> &modifiedValue) {
-  asm volatile("" : "+x"(modifiedValue));
+inline void fakeRegisterModification(Vc::Vector<T, B> &x) {
+  asm volatile("" : "+x"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_integral<T>::value>::type
-fakeRegisterModification(T &modifiedValue) {
-  asm volatile("" : "+r"(modifiedValue));
+inline typename std::enable_if<std::is_integral<T>::value>::type fakeRegisterModification(
+    T &x) {
+  asm volatile("" : "+r"(x));
 }
 
 template <typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value>::type
-fakeRegisterModification(T &modifiedValue)
-{
-  asm volatile("" : "+x"(modifiedValue));
+fakeRegisterModification(T &x) {
+  asm volatile("" : "+x"(x));
 }
 
 template <typename T>
-inline void fakeRegisterModification(Vc::Vector<T, Vc::VectorAbi::Scalar> &x)
-{
+inline void fakeRegisterModification(Vc::Vector<T, Vc::VectorAbi::Scalar> &x) {
   fakeRegisterModification(x.data());
 }
 
-template <typename T> inline void fakeMemoryRead(T &readedValue) {
-  asm volatile("" ::"m"(readedValue));
-}
+template <typename T> inline void fakeMemoryRead(T &x) { asm volatile("" ::"m"(x)); }
 
-template <typename T, typename B>
-inline void fakeRegisterRead(Vc::Vector<T, B> &readedValue) {
-  asm volatile("" ::"x"(readedValue));
+template <typename T, typename B> inline void fakeRegisterRead(Vc::Vector<T, B> &x) {
+  asm volatile("" ::"x"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_integral<T>::value>::type
-fakeRegisterRead(T &readedValue) {
-  asm volatile("" ::"r"(readedValue));
+inline typename std::enable_if<std::is_integral<T>::value>::type fakeRegisterRead(T &x) {
+  asm volatile("" ::"r"(x));
 }
 
 template <typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value>::type
-fakeRegisterRead(T &readedValue) {
-  asm volatile("" ::"x"(readedValue));
+inline typename std::enable_if<std::is_floating_point<T>::value>::type fakeRegisterRead(
+    T &x) {
+  asm volatile("" ::"x"(x));
 }
 
 template <typename T>
@@ -83,4 +77,4 @@ inline void fakeRegisterRead(Vc::Vector<T, Vc::VectorAbi::Scalar> &x) {
   fakeRegisterRead(x.data());
 }
 
-#endif // REGISTER_MODIFICATION_H
+#endif  // REGISTER_MODIFICATION_H
