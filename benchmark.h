@@ -172,23 +172,25 @@ struct TemplateWrapper {
 #define Vc_SSE_INT_VECTORS                                                               \
   Typelist<Vc::SSE::int_v, Vc::SSE::uint_v, Vc::SSE::short_v, Vc::SSE::ushort_v>
 #define Vc_SSE_FLOAT_VECTORS Typelist<Vc::SSE::double_v, Vc::SSE::float_v>
-#define Vc_SSE_VECTORS concat<Vc_SSE_INT_VECTORS, Vc_SSE_FLOAT_VECTORS>
 #else
 #define Vc_SSE_INT_VECTORS Typelist<>
 #define Vc_SSE_FLOAT_VECTORS Typelist<>
-#define Vc_SSE_VECTORS Typelist<>
 #endif // Vc_IMPL_SSE
+#define Vc_SSE_VECTORS concat<Vc_SSE_INT_VECTORS, Vc_SSE_FLOAT_VECTORS>
 
 #ifdef Vc_IMPL_AVX
-#define Vc_AVX_INT_VECTORS                                                               \
-  Typelist<Vc::AVX::int_v, Vc::AVX::uint_v, Vc::AVX::short_v, Vc::AVX::ushort_v>
 #define Vc_AVX_FLOAT_VECTORS Typelist<Vc::AVX::double_v, Vc::AVX::float_v>
-#define Vc_AVX_VECTORS Vc_AVX_FLOAT_VECTORS
+#else
+#define Vc_AVX_FLOAT_VECTORS Typelist<>
+#endif // Vc_IMPL_AVX
+
+#ifdef Vc_IMPL_AVX2
+#define Vc_AVX_INT_VECTORS                                                              \
+  Typelist<Vc::AVX2::int_v, Vc::AVX2::uint_v, Vc::AVX2::short_v, Vc::AVX2::ushort_v>
 #else
 #define Vc_AVX_INT_VECTORS Typelist<>
-#define Vc_AVX_FLOAT_VECTORS Typelist<>
-#define Vc_AVX_VECTORS Typelist<>
-#endif // Vc_IMPL_AVX
+#endif // Vc_IMPL_AVX2
+#define Vc_AVX_VECTORS concat<Vc_AVX_INT_VECTORS, Vc_AVX_FLOAT_VECTORS>
 
 #ifdef Vc_IMPL_MIC
 #define Vc_MIC_INT_VECTORS                                                               \
