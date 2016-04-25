@@ -71,12 +71,14 @@ Vc_MAKE_TWO_OP_OPERATOR(Max, Vc::max);
   Typelist<Addition, Substraction, Multiplication, Division>
 
 template <typename T, typename P>
-typename std::enable_if<P::hasTwoOps, T>::type calculate(T &x, T &y) {
+inline typename std::enable_if<P::hasTwoOps, T>::type calculate(T &x, T &y)
+{
   return P::template calculate<T>(x, y);
 }
 
 template <typename T, typename P>
-typename std::enable_if<!P::hasTwoOps, T>::type calculate(T &x, T &y) {
+inline typename std::enable_if<!P::hasTwoOps, T>::type calculate(T &x, T &y)
+{
   return P::template calculate<T>(x);
 }
 
