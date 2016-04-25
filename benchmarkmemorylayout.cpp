@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include "aos.h"
 #include "aovs.h"
 #include "soa.h"
-#include "additinolcalculations.h"
+#include "baseline.h"
 #include <Vc/cpuid.h>
 
 //! Tests all cache sizes
