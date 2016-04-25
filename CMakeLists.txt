@@ -12,7 +12,7 @@ if(NOT GGBENCH_LIBRARIES OR NOT GGBENCH_INCLUDE_DIR)
    message(FATAL_ERROR "Required Google Benchmark library not found (https://github.com/google/benchmark)")
 endif()
 
-MACRO(next_executebale title)
+MACRO(add_benchmark title)
     add_executable(${title} ${title}.cpp)
     target_include_directories(${title} PRIVATE "${Vc_INCLUDE_DIR};${GGBENCH_INCLUDE_DIR}")
     target_compile_options(${title} PRIVATE "-std=c++11;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
@@ -21,5 +21,5 @@ MACRO(next_executebale title)
 endmacro()
 
 
-next_executebale(benchmarkmemorylayout)
-next_executebale(benchmarkarithmetics)
+add_benchmark(benchmarkmemorylayout)
+add_benchmark(benchmarkarithmetics)
