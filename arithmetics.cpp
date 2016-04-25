@@ -87,8 +87,8 @@ template <typename TT> void oneOp(benchmark::State &state) {
   using T = typename TT::template at<0>;
   using P = typename TT::template at<1>;
 
-  T x(T::Random());
-  T y(T::Random());
+  T x = 1;
+  T y = 1;
   T z;
 
   while (state.KeepRunning()) {
