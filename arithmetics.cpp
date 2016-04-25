@@ -50,8 +50,8 @@ Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Substraction, -);
 Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Multiplication, *);
 Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Division, / );
 Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Modulo, % );
-Vc_MAKE_ONE_OP_OPERATOR(Sinus, Vc::sin);
-Vc_MAKE_ONE_OP_OPERATOR(Cosinus, Vc::cos);
+Vc_MAKE_ONE_OP_OPERATOR(Sine, Vc::sin);
+Vc_MAKE_ONE_OP_OPERATOR(Cosine, Vc::cos);
 Vc_MAKE_ONE_OP_OPERATOR(Sqrt, Vc::sqrt);
 Vc_MAKE_ONE_OP_OPERATOR(Rsqrt, Vc::rsqrt);
 Vc_MAKE_ONE_OP_OPERATOR(Reciprocal, Vc::reciprocal);
@@ -106,4 +106,4 @@ Vc_BENCHMARK_TEMPLATE(
     concat<outer_product<Vc_ALL_VECTORS,
                          Typelist<Addition, Substraction, Multiplication, Division>>,
            outer_product<Vc_ALL_INT_VECTORS, Typelist<Modulo>>,
-           outer_product<Vc_ALL_FLOAT_VECTORS, Typelist<Sinus, Cosinus>>>);
+           outer_product<Vc_ALL_FLOAT_VECTORS, Typelist<Sine, Cosine>>>);
