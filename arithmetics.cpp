@@ -100,7 +100,7 @@ template <typename TT> void oneOp(benchmark::State &state) {
     fakeRegisterRead(z);
   }
 
-  state.SetItemsProcessed(T::size());
+  state.SetItemsProcessed(state.iterations() * T::size());
 }
 
 Vc_BENCHMARK_TEMPLATE(
