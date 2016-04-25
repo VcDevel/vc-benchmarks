@@ -92,8 +92,8 @@ template <typename TT> void oneOp(benchmark::State &state) {
   T z;
 
   while (state.KeepRunning()) {
-    fakeMemoryModification(x);
-    fakeMemoryModification(y);
+    fakeRegisterModification(x);
+    fakeRegisterModification(y);
 
     z = calculate<T, P>(x, y);
 
