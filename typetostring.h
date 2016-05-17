@@ -91,7 +91,7 @@ typeToString_impl(V const &,
     s << "Scalar::";
   } else if (std::is_same<V, Vc::SSE::Vector<T>>::value) {
     s << "SSE::";
-  } else if (std::is_same<V, Vc::AVX::Vector<T>>::value) {
+  } else if (std::is_same<V, Vc::AVX2::Vector<T>>::value) {
     s << "AVX::";
   } else if (std::is_same<V, Vc::MIC::Vector<T>>::value) {
     s << "MIC::";
@@ -109,7 +109,7 @@ typeToString_impl(V const &,
     s << "Scalar::";
   } else if (std::is_same<V, Vc::SSE::Mask<T>>::value) {
     s << "SSE::";
-  } else if (std::is_same<V, Vc::AVX::Mask<T>>::value) {
+  } else if (std::is_same<V, Vc::AVX2::Mask<T>>::value) {
     s << "AVX::";
   } else if (std::is_same<V, Vc::MIC::Mask<T>>::value) {
     s << "MIC::";
