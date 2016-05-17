@@ -4,7 +4,7 @@ Benchmark-Tests for the Vc library
 
 ## Requirements:
 
-* https://github.com/google/benchmark
+* https://github.com/mattkretz/benchmark
 * https://github.com/VcDevel/Vc
 
 ## License
