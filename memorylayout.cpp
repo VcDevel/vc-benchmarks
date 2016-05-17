@@ -89,5 +89,5 @@ template <typename TT> inline void benchmarkGenericMemoryLayout(benchmark::State
 }
 
 Vc_BENCHMARK_TEMPLATE(benchmarkGenericMemoryLayout,
-                      outer_product<Vc_AVX_VECTORS, Vc_ALL_MEMORY_LAYOUT_TESTS>)
+                      outer_product<Vc_ALL_FLOAT_VECTORS, Vc_ALL_MEMORY_LAYOUT_TESTS>)
     ->Apply(dynamicAllCacheSize);
