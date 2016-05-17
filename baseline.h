@@ -70,31 +70,4 @@ struct Baseline {
   template <typename T> using type = BaselineImpl<T>;
 };
 
-//! Scalar
-template <typename T>
-[[deprecated("Use scalar vectors instead")]]
-    typename std::enable_if<std::is_fundamental<T>::value>::type
-    scalar(benchmark::State &state) {
-  const size_t inputSize = state.range_x();
-
-  CoordinateContainer<T> inputValues(inputSize);
-  PolarCoordinateContainer<T> outputValues(inputSize);
-
-  simulateInputAos(inputValues, inputSize);
-
-  while (state.KeepRunning()) {
-    for (size_t n = 0; n < inputSize; n++) {
-
-      std::tie(outputValues[n].radius, outputValues[n].phi) =
-          calculatePolarCoordinate(inputValues[n].x, inputValues[n].y);
-    }
-  }
-
-  state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(T));
-
-#ifdef USE_LOG
-  std::clog << "Finnished: Scaler\n";
-#endif
-}
 #endif // ADDITINAL_CALCULATIONS_H
