@@ -30,3 +30,4 @@ endmacro()
 
 add_benchmark(arithmetics)
 add_benchmark(memorylayout)
+add_benchmark(loopunroll)
