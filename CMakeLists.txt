@@ -3,8 +3,14 @@ cmake_minimum_required(VERSION 3.0)
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
    message(FATAL_ERROR "You don't want to configure in the source directory!")
 endif()
-
 project(BenchmarkVc)
+
+if(NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE Release CACHE STRING
+      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+      FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
 find_package(Vc REQUIRED)
 find_library(GGBENCH_LIBRARIES benchmark)
 find_path(GGBENCH_INCLUDE_DIR benchmark/benchmark.h)
