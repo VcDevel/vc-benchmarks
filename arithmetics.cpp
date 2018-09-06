@@ -50,8 +50,6 @@ Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Sub, -);
 Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Mul, *);
 Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Div, / );
 Vc_MAKE_BASIC_ARITHMETIC_OPERATOR(Mod, % );
-Vc_MAKE_ONE_OP_OPERATOR(Sin, Vc::sin);
-Vc_MAKE_ONE_OP_OPERATOR(Cos, Vc::cos);
 Vc_MAKE_ONE_OP_OPERATOR(Sqrt, Vc::sqrt);
 Vc_MAKE_ONE_OP_OPERATOR(Rsqrt, Vc::rsqrt);
 Vc_MAKE_ONE_OP_OPERATOR(Reciprocal, Vc::reciprocal);
@@ -100,5 +98,5 @@ Vc_BENCHMARK_TEMPLATE(
     oneOp, concat<outer_product<Vc_ALL_VECTORS, Typelist<Add, Sub, Mul, Div>>,
                   outer_product<Vc_ALL_INT_VECTORS, Typelist<Mod>>,
                   outer_product<Vc_ALL_FLOAT_VECTORS,
-                                Typelist<Sin, Cos, Sqrt, Rsqrt, Abs, Round, Log, Log2,
+                                Typelist<Sqrt, Rsqrt, Abs, Round, Log, Log2,
                                          Log10, Exp, Asin, Atan, Atan2, Min, Max>>>);

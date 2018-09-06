@@ -61,6 +61,9 @@ if(NOT GGBENCH_LIBRARIES OR NOT GGBENCH_INCLUDE_DIR)
    message(FATAL_ERROR "Required Google Benchmark library not found (https://github.com/google/benchmark)")
 endif()
 
+# -fstack-protector is the default of GCC, but at least Ubuntu changes the default to -fstack-protector-strong, which is crazy
+AddCompilerFlag("-fstack-protector")
+
 CHECK_CXX_SOURCE_COMPILES("#include <cxxabi.h>
 int main() { return 0; }" cxx_abi_header_works)
 if(cxx_abi_header_works)
@@ -81,3 +84,4 @@ add_benchmark(arithmetics)
 add_benchmark(memorylayout)
 add_benchmark(loopunroll)
 add_benchmark(quadratic)
+add_benchmark(sincos)
