@@ -22,8 +22,9 @@ else()
       message(FATAL_ERROR "You need to specify the src directory of Vc via `-DVc_SRC_DIR=<path to Vc>`")
    endif()
 
-   set(Vc_INCLUDE_DIR "${Vc_SRC_DIR}/include/;${Vc_SRC_DIR}")
-   set(Vc_BUILD_DIR "${CMAKE_BINARY_DIR}/Vc")
+   string(REGEX REPLACE "[][ ():, |!*/]" "" Vc_BUILD_DIR "${Vc_SRC_DIR}")
+   set(Vc_BUILD_DIR "${CMAKE_BINARY_DIR}/${Vc_BUILD_DIR}")
+
    file(MAKE_DIRECTORY "${Vc_BUILD_DIR}")
    execute_process(
       COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${Vc_SRC_DIR}
@@ -39,6 +40,8 @@ else()
    if(NOT ok EQUAL 0)
       message(FATAL_ERROR "building libVc failed")
    endif()
+
+   set(Vc_INCLUDE_DIR "${Vc_SRC_DIR}/include/;${Vc_SRC_DIR}")
    find_library(Vc_LIBRARIES Vc
       PATHS "${Vc_BUILD_DIR}"
       NO_DEFAULT_PATH)
