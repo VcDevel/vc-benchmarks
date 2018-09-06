@@ -25,6 +25,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #define AOS_H
 #include <string>
 #include <vector>
+#include <random>
 #include <Vc/vector>
 
 using Vc::Common::InterleavedMemoryWrapper;
