@@ -40,13 +40,6 @@ void dynamicAllCacheSize(benchmark::internal::Benchmark *function) {
 struct RestScalar {};
 struct Padding {};
 
-#define Vc_ALL_MEMORY_LAYOUT_TESTS                                                       \
-  concat<outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,               \
-         outer_product<                                                                  \
-             Typelist<AosSubscriptAccess, InterleavedAccess, AosGatherScatterAccess,     \
-                      SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,      \
-             Typelist<Padding, RestScalar>>>
-
 template <typename TT> inline void benchmarkGenericMemoryLayout(benchmark::State &state) {
   using T = typename TT::template at<0>;
   using A = typename TT::template at<1>;
@@ -54,7 +47,7 @@ template <typename TT> inline void benchmarkGenericMemoryLayout(benchmark::State
 
   typedef typename A::template type<T> P;
 
-  const size_t inputSize = state.range_x();
+  const size_t inputSize = state.range(0);
   const size_t missingSize =
       std::is_same<B, RestScalar>::value ? inputSize % T::size() : 0;
   const size_t containerSize = std::is_same<B, RestScalar>::value
@@ -84,10 +77,18 @@ template <typename TT> inline void benchmarkGenericMemoryLayout(benchmark::State
     }
   }
 
-  state.SetItemsProcessed(state.iterations() * state.range_x());
-  state.SetBytesProcessed(state.items_processed() * sizeof(typename T::value_type));
+  const double items = state.iterations() * state.range(0);
+  state.counters["Items"] = items;
+  state.counters["Bytes"] = items * sizeof(typename T::value_type);
 }
 
-Vc_BENCHMARK_TEMPLATE(benchmarkGenericMemoryLayout,
-                      outer_product<Vc_ALL_FLOAT_VECTORS, Vc_ALL_MEMORY_LAYOUT_TESTS>)
+Vc_BENCHMARK_TEMPLATE(
+    benchmarkGenericMemoryLayout,
+    outer_product<
+        all_real_vectors_wo_simdarray,
+        concat<outer_product<Typelist<AovsAccess, Baseline>, Typelist<Padding>>,
+               outer_product<
+                   Typelist<AosSubscriptAccess, InterleavedAccess, AosGatherScatterAccess,
+                            SoaSubscriptAccess, LoadStoreAccess, SoaGatherScatterAccess>,
+                   Typelist<Padding, RestScalar>>>>)
     ->Apply(dynamicAllCacheSize);

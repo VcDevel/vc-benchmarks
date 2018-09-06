@@ -1,6 +1,6 @@
 /*{{{
 Copyright © 2016 Guilherme Amadio
-Copyright © 2016 Matthias Kretz <kretz@kde.org>
+Copyright © 2016-2018 Matthias Kretz <kretz@kde.org>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -138,13 +138,13 @@ void QuadSolveSIMD(Float_v const &a, Float_v const &b,
 
   x1(mask2) = root1;
   x2(mask2) = root2;
-  roots = iif((IMask)mask2, Int32_v(2), Int32_v(0));
+  roots = iif(simd_cast<IMask>(mask2), Int32_v(2), Int32_v(0));
 
   if (mask1.isEmpty())
     return;
 
   root1 = Float_v(-0.5f) * b * a_inv;
-  roots((IMask)mask1) = Int32_v(1);
+  roots(simd_cast<IMask>(mask1)) = Int32_v(1);
   x1(mask1) = root1;
   x2(mask1) = root1;
 }
@@ -173,20 +173,20 @@ struct Data {
 
 void scalar(benchmark::State &state) {
   Data d;
-  state.Run([&] {
+  for (auto _ : state) {
     for (int i = 0; i < N; i++) {
       QuadSolve<float>(d.a[i], d.b[i], d.c[i], d.x1[i], d.x2[i], d.roots[i]);
     }
-  });
+  }
 }
 
 void intrinsics(benchmark::State &state) {
   Data d;
-  state.Run([&] {
+  for (auto _ : state) {
     for (int i = 0; i < N; i += 8) {
       QuadSolveAVX(&d.a[i], &d.b[i], &d.c[i], &d.x1[i], &d.x2[i], &d.roots[i]);
     }
-  });
+  }
 }
 
 void TestQuadSolve(const float *__restrict__ a, const float *__restrict__ b,
@@ -200,7 +200,9 @@ void TestQuadSolve(const float *__restrict__ a, const float *__restrict__ b,
 
 void vc(benchmark::State &state) {
   Data d;
-  state.Run([&] { TestQuadSolve(d.a, d.b, d.c, d.x1, d.x2, d.roots); });
+  for (auto _ : state) {
+    TestQuadSolve(d.a, d.b, d.c, d.x1, d.x2, d.roots);
+  }
 }
 
 BENCHMARK(scalar);

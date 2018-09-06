@@ -1,4 +1,6 @@
-/*Copyright © 2016 Björn Gaier
+/*
+Copyright © 2016-2018 Matthias Kretz <kretz@kde.org>
+Copyright © 2016 Björn Gaier
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -52,8 +54,8 @@ template <typename T> struct BaselineImpl : public BaselineLayout<T> {
   void setupLoop() {}
 
   Coordinate<T> load(size_t index) {
-    fakeMemoryModification(BaselineLayout<T>::inputValue.x);
-    fakeMemoryModification(BaselineLayout<T>::inputValue.y);
+    fake_modification(BaselineLayout<T>::inputValue.x);
+    fake_modification(BaselineLayout<T>::inputValue.y);
 
     return BaselineLayout<T>::inputValue;
   }
@@ -61,8 +63,8 @@ template <typename T> struct BaselineImpl : public BaselineLayout<T> {
   void store(size_t index, const PolarCoordinate<T> &coord) {
     BaselineLayout<T>::outputValue = coord;
 
-    fakeRegisterRead(BaselineLayout<T>::outputValue.radius);
-    fakeRegisterRead(BaselineLayout<T>::outputValue.phi);
+    do_not_optimize(BaselineLayout<T>::outputValue.radius);
+    do_not_optimize(BaselineLayout<T>::outputValue.phi);
   }
 };
 

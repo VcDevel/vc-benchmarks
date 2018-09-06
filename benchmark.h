@@ -1,4 +1,6 @@
-/*Copyright © 2016 Björn Gaier
+/*
+Copyright © 2016-2018 Matthias Kretz <kretz@kde.org>
+Copyright © 2016 Björn Gaier
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -26,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 
 #include <benchmark/benchmark.h>
 #include <memory>
-#include "fakereadmodify.h"
 #include "typetostring.h"
 
 typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark *>>
@@ -162,56 +163,67 @@ struct TemplateWrapper {
   int BENCHMARK_PRIVATE_CONCAT(variable, n_, __LINE__) =                                 \
       BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<__VA_ARGS__::size() - 1>()
 
-#define Vc_SCALAR_INT_VECTORS                                                            \
-  Typelist<Vc::Scalar::int_v, Vc::Scalar::uint_v, Vc::Scalar::short_v,                   \
-           Vc::Scalar::ushort_v>
-#define Vc_SCALAR_FLOAT_VECTORS Typelist<Vc::Scalar::double_v, Vc::Scalar::float_v>
-#define Vc_SCALAR_VECTORS concat<Vc_SCALAR_FLOAT_VECTORS, Vc_SCALAR_INT_VECTORS>
+///////////////////////////////////////////////////////////////////////////////
+// element_count<T>
+template <class T, class = void>
+struct element_count : std::integral_constant<std::size_t, 1> {};
+template <class T>
+struct element_count<T, decltype((void)T::size())>
+    : std::integral_constant<std::size_t, T::size()> {};
 
-#ifdef Vc_IMPL_SSE
-#define Vc_SSE_INT_VECTORS                                                               \
-  Typelist<Vc::SSE::int_v, Vc::SSE::uint_v, Vc::SSE::short_v, Vc::SSE::ushort_v>
-#define Vc_SSE_FLOAT_VECTORS Typelist<Vc::SSE::double_v, Vc::SSE::float_v>
-#else
-#define Vc_SSE_INT_VECTORS Typelist<>
-#define Vc_SSE_FLOAT_VECTORS Typelist<>
-#endif // Vc_IMPL_SSE
-#define Vc_SSE_VECTORS concat<Vc_SSE_INT_VECTORS, Vc_SSE_FLOAT_VECTORS>
+///////////////////////////////////////////////////////////////////////////////
+// fake_modification(x)
+template <class T>
+typename std::enable_if<(sizeof(T) < 16 && !std::is_class<T>::value)>::type
+fake_modification(T &x) {
+  asm("" :"+r"(x));
+}
+template <class T>
+typename std::enable_if<(sizeof(T) >= 16 && !std::is_class<T>::value)>::type
+fake_modification(T &x) {
+  asm("" :"+x"(x));
+}
+template <class T, class A> void fake_modification(Vc::Vector<T, A> &x) {
+  fake_modification(x.data());
+}
+template <class T, std::size_t N, class V>
+void fake_modification(Vc::SimdArray<T, N, V, N> &x) {
+  fake_modification(internal_data(x));
+}
+template <class T, std::size_t N, class V, std::size_t Wt>
+void fake_modification(Vc::SimdArray<T, N, V, Wt> &x) {
+  fake_modification(internal_data0(x));
+  fake_modification(internal_data1(x));
+}
 
-#ifdef Vc_IMPL_AVX
-#define Vc_AVX_FLOAT_VECTORS Typelist<Vc::AVX::double_v, Vc::AVX::float_v>
-#else
-#define Vc_AVX_FLOAT_VECTORS Typelist<>
-#endif // Vc_IMPL_AVX
-
-#ifdef Vc_IMPL_AVX2
-#define Vc_AVX_INT_VECTORS                                                              \
-  Typelist<Vc::AVX2::int_v, Vc::AVX2::uint_v, Vc::AVX2::short_v, Vc::AVX2::ushort_v>
-#else
-#define Vc_AVX_INT_VECTORS Typelist<>
-#endif // Vc_IMPL_AVX2
-#define Vc_AVX_VECTORS concat<Vc_AVX_INT_VECTORS, Vc_AVX_FLOAT_VECTORS>
-
-#ifdef Vc_IMPL_MIC
-#define Vc_MIC_INT_VECTORS                                                               \
-  Typelist<Vc::MIC::int_v, Vc::MIC::uint_v, Vc::MIC::short_v, Vc::MIC::ushort_v>
-#define Vc_MIC_FLOAT Typelist<Vc::MIC::double_v, Vc::MIC::float_v>
-#define Vc_MIC_VECTORS concat<Vc_MIC_INT_VECTORS, Vc_MIC_FLOAT_VECTORS>
-#else
-#define Vc_MIC_INT_VECTORS Typelist<>
-#define Vc_MIC_FLOAT_VECTORS Typelist<>
-#define Vc_MIC_VECTORS Typelist<>
-#endif // Vc_IMPL_MIC
-
-#define Vc_ALL_VECTORS                                                                   \
-  concat<Vc_SCALAR_VECTORS, Vc_SSE_VECTORS, Vc_AVX_VECTORS, Vc_MIC_VECTORS>
-
-#define Vc_ALL_INT_VECTORS                                                               \
-  concat<Vc_SCALAR_INT_VECTORS, Vc_SSE_INT_VECTORS, Vc_AVX_INT_VECTORS,                  \
-         Vc_MIC_INT_VECTORS>
-#define Vc_ALL_FLOAT_VECTORS                                                             \
-  concat<Vc_SCALAR_FLOAT_VECTORS, Vc_SSE_FLOAT_VECTORS, Vc_AVX_FLOAT_VECTORS,            \
-         Vc_MIC_FLOAT_VECTORS>
+///////////////////////////////////////////////////////////////////////////////
+// do_not_optimize(expr)
+template <class T>
+typename std::enable_if<(sizeof(T) < 16 && !std::is_class<T>::value)>::type
+do_not_optimize(const T &x) {
+  asm("" ::"r"(x));
+}
+template <class T>
+typename std::enable_if<(sizeof(T) >= 16 && !std::is_class<T>::value)>::type
+do_not_optimize(const T &x) {
+  asm("" ::"x"(x));
+}
+template <class T, class A> void do_not_optimize(const Vc::Vector<T, A> &x) {
+  do_not_optimize(x.data());
+}
+template <class T, std::size_t N, class V>
+void do_not_optimize(const Vc::SimdArray<T, N, V, N> &x) {
+  do_not_optimize(internal_data(x));
+}
+template <class T, std::size_t N, class V, std::size_t Wt>
+void do_not_optimize(const Vc::SimdArray<T, N, V, Wt> &x) {
+  do_not_optimize(internal_data0(x));
+  do_not_optimize(internal_data1(x));
+}
+template <class T, class U> void do_not_optimize(const std::pair<T, U> &x) {
+  do_not_optimize(x.first);
+  do_not_optimize(x.second);
+}
 
 BENCHMARK_MAIN();
 #endif // BENCHMARK_H

@@ -1,5 +1,5 @@
 /*  This file is part of the Vc library. {{{
-Copyright © 2014-2015 Matthias Kretz <kretz@kde.org>
+Copyright © 2014-2018 Matthias Kretz <kretz@kde.org>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef VC_TESTS_TYPELIST_H_
 #define VC_TESTS_TYPELIST_H_
 
+#include <Vc/vector.h>
 #include <type_traits>
 
 template <typename... Ts> struct Typelist;
@@ -228,6 +229,30 @@ static_assert(
                  Typelist<char, float, double>>>::value,
     "outer_product does not work as expected");
 // }}}
+
+template <class T, bool WithSimdArray = true>
+using all_vectors_of =
+    concat<Vc::Scalar::Vector<T>,
+           Typelist<
+#ifdef Vc_IMPL_SSE2
+               Vc::SSE::Vector<T>
+#endif
+               >,
+           Typelist<
+#ifdef Vc_IMPL_AVX2
+               Vc::AVX2::Vector<T>
+#endif
+               >,
+           typename std::conditional<WithSimdArray, Typelist<Vc::SimdArray<T, 16>>,
+                                     Typelist<>>::type>;
+
+using all_real_vectors_wo_simdarray =
+    concat<all_vectors_of<float, false>, all_vectors_of<double, false>>;
+using all_real_vectors = concat<all_vectors_of<float>, all_vectors_of<double>>;
+using all_integral_vectors =
+    concat<all_vectors_of<int>, all_vectors_of<unsigned int>, all_vectors_of<short>,
+           all_vectors_of<unsigned short>>;
+using all_vectors = concat<all_real_vectors, all_integral_vectors>;
 
 #endif  // VC_TESTS_TYPELIST_H_
 

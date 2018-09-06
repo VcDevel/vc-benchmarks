@@ -89,11 +89,6 @@ struct Sincos : SincosInput {
   }
 };
 
-template <class T> struct element_count : std::integral_constant<std::size_t, 1> {};
-template <class T, class A>
-struct element_count<Vc::Vector<T, A>>
-    : std::integral_constant<std::size_t, Vc::Vector<T, A>::size()> {};
-
 template <class Setup> void _(benchmark::State &state) {
   using Operation = typename Setup::template at<0>;
   using ArgType = typename Setup::template at<1>;
@@ -101,14 +96,15 @@ template <class Setup> void _(benchmark::State &state) {
   const Operation op;
   ArgType x = op.template random_input<ArgType>();
 
-  state.Run([&] {
+  for (auto _ : state) {
     x += 0.0001f;
-    //fakeRegisterModification(x);
-    const auto r = op(x);
-    fakeRegisterRead(r);
-  });
-  state.SetItemsProcessed(state.iterations() * element_count<ArgType>::value * op.count);
+    do_not_optimize(op(x));
+  }
+  state.counters["Rate"] =
+      state.iterations() * element_count<ArgType>::value * op.count;
 }
 
-Vc_BENCHMARK_TEMPLATE(_, outer_product<Typelist<Sin, Cos, Sincos>,
-                                       concat<double, float, Vc_ALL_FLOAT_VECTORS>>);
+Vc_BENCHMARK_TEMPLATE(
+    _,
+    outer_product<Typelist<Sin, Cos, Sincos>,
+                  concat<float, all_vectors_of<float>, double, all_vectors_of<double>>>);

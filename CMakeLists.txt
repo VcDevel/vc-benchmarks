@@ -80,7 +80,11 @@ MACRO(add_benchmark title)
     target_compile_options(${title} PRIVATE "-std=c++11;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
     set_target_properties(${title} PROPERTIES LINK_FLAGS -pthread)
     target_link_libraries(${title} ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})
-    add_custom_target(run_${title} ${title} DEPENDS ${title} COMMENT "Execute ${title} benchmark" VERBATIM)
+    add_custom_target(run_${title}
+       ${title} --benchmark_counters_tabular=true
+       DEPENDS ${title}
+       COMMENT "Execute ${title} benchmark"
+       VERBATIM)
 endmacro()
 
 add_benchmark(arithmetics)

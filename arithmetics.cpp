@@ -1,4 +1,6 @@
-/*Copyright © 2016 Björn Gaier
+/*
+Copyright © 2016-2018 Matthias Kretz <kretz@kde.org>
+Copyright © 2016 Björn Gaier
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -78,25 +80,34 @@ inline typename std::enable_if<!P::hasTwoOps, T>::type calculate(T &x, T &y)
 }
 
 template <typename TT> void oneOp(benchmark::State &state) {
-  using T = typename TT::template at<0>;
-  using P = typename TT::template at<1>;
+  using P = typename TT::template at<0>;
+  using T = typename TT::template at<1>;
 
-  T x = 1;
-  T y = 1;
-  T z;
+  T a = 1, b = 2, c = 3, d = 4, e = 5;
 
-  state.Run([&] {
-    fakeRegisterModification(x);
-    fakeRegisterModification(y);
-    z = calculate<T, P>(x, y);
-    fakeRegisterRead(z);
-  });
-  state.SetItemsProcessed(state.iterations() * T::size());
+  for (auto _ : state) {
+    fake_modification(a);
+    fake_modification(b);
+    fake_modification(c);
+    fake_modification(d);
+    fake_modification(e);
+    do_not_optimize(calculate<T, P>(a, b));
+    do_not_optimize(calculate<T, P>(a, c));
+    do_not_optimize(calculate<T, P>(a, d));
+    do_not_optimize(calculate<T, P>(a, e));
+    do_not_optimize(calculate<T, P>(b, c));
+    do_not_optimize(calculate<T, P>(b, d));
+    do_not_optimize(calculate<T, P>(b, e));
+    do_not_optimize(calculate<T, P>(c, d));
+    do_not_optimize(calculate<T, P>(c, e));
+    do_not_optimize(calculate<T, P>(d, e));
+  }
+  state.counters["Rate"] = state.iterations() * element_count<T>::value * 10;
 }
 
 Vc_BENCHMARK_TEMPLATE(
-    oneOp, concat<outer_product<Vc_ALL_VECTORS, Typelist<Add, Sub, Mul, Div>>,
-                  outer_product<Vc_ALL_INT_VECTORS, Typelist<Mod>>,
-                  outer_product<Vc_ALL_FLOAT_VECTORS,
-                                Typelist<Sqrt, Rsqrt, Abs, Round, Log, Log2,
-                                         Log10, Exp, Asin, Atan, Atan2, Min, Max>>>);
+    oneOp, concat<outer_product<Typelist<Add, Sub, Mul, Div>, all_vectors>,
+                  outer_product<Typelist<Mod>, all_integral_vectors>,
+                  outer_product<Typelist<Sqrt, Rsqrt, Abs, Round, Log, Log2, Log10, Exp,
+                                         Asin, Atan, Atan2, Min, Max>,
+                                all_real_vectors>>);

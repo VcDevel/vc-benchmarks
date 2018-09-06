@@ -1,5 +1,5 @@
 /*{{{
-Copyright © 2016 Matthias Kretz <kretz@kde.org>
+Copyright © 2016-2018 Matthias Kretz <kretz@kde.org>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -74,10 +74,12 @@ template <typename Config> void loop(benchmark::State &state)
   Container  input(N);
   Container output(N);
   std::iota(std::begin(input), std::end(input), 0);
-  state.Run([&] { workLoop(&input[0], &output[0], N, Unroll()); });
-  state.SetItemsProcessed(state.iterations() * N);
-  state.SetBytesProcessed(state.items_processed() * sizeof(T));
+  for (auto _ : state) {
+    workLoop(&input[0], &output[0], N, Unroll());
+  }
+  const double items = state.iterations() * N;
+  state.counters["Items"] = items;
+  state.counters["Bytes"] = items * sizeof(T);
 }
 
-Vc_BENCHMARK_TEMPLATE(loop,
-                      outer_product<Vc_ALL_FLOAT_VECTORS, Typelist<Simple, Unrolled>>);
+Vc_BENCHMARK_TEMPLATE(loop, outer_product<all_real_vectors, Typelist<Simple, Unrolled>>);
