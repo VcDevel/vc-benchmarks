@@ -12,7 +12,7 @@ all:
 $(build_dir)/CMakeCache.txt:
 	@test -n "$(build_dir)"
 	@mkdir -p "$(build_dir)"
-	@test -e "$(build_dir)/CMakeCache.txt" || cmake -H. -B"$(build_dir)"
+	@test -e "$(build_dir)/CMakeCache.txt" || cmake -H. -DUSE_INSTALLED_Vc=ON -B"$(build_dir)"
 
 print_build_dir:
 	@echo "$(PWD)/$(build_dir)"
