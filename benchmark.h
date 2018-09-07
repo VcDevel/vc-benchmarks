@@ -30,19 +30,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <memory>
 #include "typetostring.h"
 
-typedef std::unique_ptr<std::vector<::benchmark::internal::Benchmark *>>
-    UniqueBenchmarkPointer;
 struct TemplateWrapper {
+  std::vector<benchmark::internal::Benchmark *> benchmarks;
 
-  UniqueBenchmarkPointer benchmarks{
-      new std::vector<::benchmark::internal::Benchmark *>()};
-
-  void append(::benchmark::internal::Benchmark *ptr) { benchmarks->push_back(ptr); }
+  void append(benchmark::internal::Benchmark *ptr) { benchmarks.push_back(ptr); }
 
   TemplateWrapper *operator->() { return this; }
 
   TemplateWrapper &Arg(int x) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->Arg(x);
     }
 
@@ -50,7 +46,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &Range(int start, int limit) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->Range(start, limit);
     }
 
@@ -58,7 +54,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &DenseRange(int start, int limit) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->DenseRange(start, limit);
     }
 
@@ -66,7 +62,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &ArgPair(int x, int y) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->ArgPair(x, y);
     }
 
@@ -74,7 +70,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &RangePair(int lo1, int hi1, int lo2, int hi2) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->RangePair(lo1, hi1, lo2, hi2);
     }
 
@@ -82,7 +78,7 @@ struct TemplateWrapper {
   }
 
   template <typename... Ts> TemplateWrapper &Apply(Ts &&... args) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->Apply(args...);
     }
 
@@ -90,7 +86,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &MinTime(double t) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->MinTime(t);
     }
 
@@ -98,7 +94,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &UseRealTime() {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->UseRealTime();
     }
 
@@ -106,7 +102,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &Threads(int t) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->Threads(t);
     }
 
@@ -114,7 +110,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &ThreadRange(int min_threads, int max_threads) {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->ThreadRange(min_threads, max_threads);
     }
 
@@ -122,7 +118,7 @@ struct TemplateWrapper {
   }
 
   TemplateWrapper &ThreadPerCpu() {
-    for (auto &p : *benchmarks) {
+    for (auto &p : benchmarks) {
       p->ThreadPerCpu();
     }
 
@@ -135,29 +131,22 @@ struct TemplateWrapper {
 #define Vc_BENCHMARK_TEMPLATE(n_, ...)                                                   \
   template <unsigned int N>                                                              \
   TemplateWrapper BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)() {               \
-    std::string name(#n_);                                                               \
-    name.append("<");                                                                    \
-    name.append(typeToString<__VA_ARGS__::at<N>>());                                     \
-    name.append(">");                                                                    \
+    using TArg = __VA_ARGS__::at<N>;                                                     \
+    constexpr auto *fptr = n_<TArg>;                                                     \
+    static std::string name = #n_"<" + typeToString<TArg>() + '>';                       \
     TemplateWrapper wrapper =                                                            \
-        std::move(BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__) < N - 1 > ());    \
-    wrapper->append(::benchmark::internal::RegisterBenchmarkInternal(                    \
-        new ::benchmark::internal::FunctionBenchmark(name.c_str(),                       \
-                                                     n_<__VA_ARGS__::at<N>>)));          \
+        BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<N - 1>();                   \
+    wrapper.append(benchmark::RegisterBenchmark(name.c_str(), fptr));                    \
     return wrapper;                                                                      \
   }                                                                                      \
                                                                                          \
   template <>                                                                            \
   TemplateWrapper BENCHMARK_PRIVATE_CONCAT(typeListFunc, n_, __LINE__)<0u>() {           \
-    std::string name(#n_);                                                               \
-    name.append("<");                                                                    \
-    name.append(typeToString<__VA_ARGS__::at<0>>());                                     \
-    name.append(">");                                                                    \
+    using TArg = __VA_ARGS__::at<0>;                                                     \
+    constexpr auto *fptr = n_<TArg>;                                                     \
+    static std::string name = #n_"<" + typeToString<TArg>() + '>';                       \
     TemplateWrapper wrapper;                                                             \
-                                                                                         \
-    wrapper.append(::benchmark::internal::RegisterBenchmarkInternal(                     \
-        new ::benchmark::internal::FunctionBenchmark(name.c_str(),                       \
-                                                     n_<__VA_ARGS__::at<0>>)));          \
+    wrapper.append(benchmark::RegisterBenchmark(name.c_str(), fptr));                    \
     return wrapper;                                                                      \
   }                                                                                      \
   int BENCHMARK_PRIVATE_CONCAT(variable, n_, __LINE__) =                                 \
