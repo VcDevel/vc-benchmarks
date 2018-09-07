@@ -58,11 +58,7 @@ else()
    list(APPEND Vc_ALL_FLAGS ${Vc_COMPILE_FLAGS})
    list(APPEND Vc_ALL_FLAGS ${Vc_ARCHITECTURE_FLAGS})
 endif()
-find_library(GGBENCH_LIBRARIES benchmark)
-find_path(GGBENCH_INCLUDE_DIR benchmark/benchmark.h)
-if(NOT GGBENCH_LIBRARIES OR NOT GGBENCH_INCLUDE_DIR)
-   message(FATAL_ERROR "Required Google Benchmark library not found (https://github.com/google/benchmark)")
-endif()
+find_package(benchmark 1.4 REQUIRED)
 
 # -fstack-protector is the default of GCC, but at least Ubuntu changes the default to -fstack-protector-strong, which is crazy
 AddCompilerFlag("-fstack-protector")
@@ -76,10 +72,10 @@ add_definitions(${Vc_DEFINITIONS})
 
 MACRO(add_benchmark title)
     add_executable(${title} ${title}.cpp)
-    target_include_directories(${title} PRIVATE "${Vc_INCLUDE_DIR};${GGBENCH_INCLUDE_DIR}")
+    target_include_directories(${title} PRIVATE "${Vc_INCLUDE_DIR}")
     target_compile_options(${title} PRIVATE "-std=c++11;${Vc_COMPILE_FLAGS};${Vc_ARCHITECTURE_FLAGS}")
     set_target_properties(${title} PROPERTIES LINK_FLAGS -pthread)
-    target_link_libraries(${title} ${Vc_LIBRARIES} ${GGBENCH_LIBRARIES})
+    target_link_libraries(${title} ${Vc_LIBRARIES} benchmark::benchmark)
     add_custom_target(run_${title}
        ${title} --benchmark_counters_tabular=true
        DEPENDS ${title}
