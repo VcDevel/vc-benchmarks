@@ -175,6 +175,8 @@ fake_modification(T &x) {
 template <class T, class A> void fake_modification(Vc::Vector<T, A> &x) {
   fake_modification(x.data());
 }
+template <class T, int N>
+void fake_modification(Vc::Vector<T, Vc::simd_abi::fixed_size<N>> &x);
 template <class T, std::size_t N, class V>
 void fake_modification(Vc::SimdArray<T, N, V, N> &x) {
   fake_modification(internal_data(x));
@@ -183,6 +185,10 @@ template <class T, std::size_t N, class V, std::size_t Wt>
 void fake_modification(Vc::SimdArray<T, N, V, Wt> &x) {
   fake_modification(internal_data0(x));
   fake_modification(internal_data1(x));
+}
+template <class T, int N>
+void fake_modification(Vc::Vector<T, Vc::simd_abi::fixed_size<N>> &x) {
+  fake_modification(static_cast<Vc::SimdArray<T, N> &>(x));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,6 +206,8 @@ do_not_optimize(const T &x) {
 template <class T, class A> void do_not_optimize(const Vc::Vector<T, A> &x) {
   do_not_optimize(x.data());
 }
+template <class T, int N>
+void do_not_optimize(const Vc::Vector<T, Vc::simd_abi::fixed_size<N>> &x);
 template <class T, std::size_t N, class V>
 void do_not_optimize(const Vc::SimdArray<T, N, V, N> &x) {
   do_not_optimize(internal_data(x));
@@ -208,6 +216,10 @@ template <class T, std::size_t N, class V, std::size_t Wt>
 void do_not_optimize(const Vc::SimdArray<T, N, V, Wt> &x) {
   do_not_optimize(internal_data0(x));
   do_not_optimize(internal_data1(x));
+}
+template <class T, int N>
+void do_not_optimize(const Vc::Vector<T, Vc::simd_abi::fixed_size<N>> &x) {
+  do_not_optimize(static_cast<const Vc::SimdArray<T, N> &>(x));
 }
 template <class T, class U> void do_not_optimize(const std::pair<T, U> &x) {
   do_not_optimize(x.first);
