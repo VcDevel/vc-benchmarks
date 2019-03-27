@@ -139,9 +139,9 @@ template <typename T> struct AosGatherScatterAccessImpl : public AosLayout<T> {
   IT indexes;
 
   AosGatherScatterAccessImpl(size_t containerSize)
-      : AosLayout<T>(containerSize), indexes(IT::IndexesFromZero()) {}
+      : AosLayout<T>(containerSize), indexes(IT([](int n) { return n; })) {}
 
-  void setupLoop() { indexes = IT::IndexesFromZero(); }
+  void setupLoop() { indexes = IT([](int n) { return n; }); }
 
   Coordinate<T> load(size_t index) {
     Coordinate<T> r;

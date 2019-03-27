@@ -126,9 +126,11 @@ template <typename T> struct SoaGatherScatterAccessImpl : public SoaLayout<T> {
   IT indexes;
 
   SoaGatherScatterAccessImpl(size_t containerSize)
-      : SoaLayout<T>(containerSize), indexes(IT::IndexesFromZero()) {}
+      : SoaLayout<T>(containerSize), indexes(IT([](int n) { return n; })) {}
 
-  void setupLoop() { indexes = IT::IndexesFromZero(); }
+  void setupLoop() {
+    indexes = IT([](int n) { return n; });
+  }
 
   Coordinate<T> load(size_t index) {
     Coordinate<T> r;
