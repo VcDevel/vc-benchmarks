@@ -1,6 +1,7 @@
 #include "benchmark.h"
 #include <limits>
 #include <random>
+#include <Vc/algorithm>
 
 template <class Float = float> struct PositionTemplate {
   Float x, y, z;
